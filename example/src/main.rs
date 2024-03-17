@@ -1,7 +1,7 @@
 use std::env;
 
 use jupiter_swap_api_client::{
-    quote::QuoteRequest, swap::SwapRequest, transaction_config::TransactionConfig,
+    quote::QuoteRequest, quote::QuoteResponse, swap::SwapRequest, transaction_config::TransactionConfig,
     JupiterSwapApiClient,
 };
 use solana_client::nonblocking::rpc_client::RpcClient;
@@ -33,6 +33,9 @@ async fn main() {
     let quote_response = jupiter_swap_api_client.quote(&quote_request).await.unwrap();
     println!("{quote_response:#?}");
 
+}
+
+async fn swap(jupiter_swap_api_client: JupiterSwapApiClient, quote_response: QuoteResponse) {
     // POST /swap
     let swap_response = jupiter_swap_api_client
         .swap(&SwapRequest {
