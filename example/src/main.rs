@@ -26,6 +26,8 @@ async fn main() {
     println!("Using base url: {}", api_base_url);
 
     let jupiter_swap_api_client = JupiterSwapApiClient::new(api_base_url);
+
+    let mut macd = Macd::new(3, 6, 4).unwrap();
     
     let quote_request = QuoteRequest {
         amount: 1_000,
@@ -39,7 +41,9 @@ async fn main() {
     loop {
         let quote_response = jupiter_swap_api_client.quote(&quote_request).await.unwrap();
         let price = quote_response.out_amount;
+        let next = macd.next(price as f64);
         println!("{price:#?}");
+        println!("{next:#?}");
         thread::sleep(Duration::from_secs(1));
     }
 
