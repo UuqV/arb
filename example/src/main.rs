@@ -7,6 +7,10 @@ use jupiter_swap_api_client::{
 use solana_client::nonblocking::rpc_client::RpcClient;
 use solana_sdk::{pubkey, transaction::VersionedTransaction};
 use solana_sdk::{pubkey::Pubkey, signature::NullSigner};
+use ta::indicators::MovingAverageConvergenceDivergence as Macd;
+use ta::Next;
+use std::thread;
+use std::time::Duration;
 use tokio;
 
 const USDC_MINT: Pubkey = pubkey!("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v");
@@ -14,15 +18,17 @@ const NATIVE_MINT: Pubkey = pubkey!("So11111111111111111111111111111111111111112
 
 pub const TEST_WALLET: Pubkey = pubkey!("2AQdpHJ2JpcEgPiATUXjQxA8QmafFegfQwSLWSprPicm"); // Coinbase 2 wallet
 
+
+
 #[tokio::main]
 async fn main() {
     let api_base_url = env::var("API_BASE_URL").unwrap_or("https://quote-api.jup.ag/v6".into());
     println!("Using base url: {}", api_base_url);
 
     let jupiter_swap_api_client = JupiterSwapApiClient::new(api_base_url);
-
+    
     let quote_request = QuoteRequest {
-        amount: 1_000_000,
+        amount: 1_000,
         input_mint: USDC_MINT,
         output_mint: NATIVE_MINT,
         slippage_bps: 50,
@@ -30,9 +36,16 @@ async fn main() {
     };
 
     // GET /quote
-    let quote_response = jupiter_swap_api_client.quote(&quote_request).await.unwrap();
-    println!("{quote_response:#?}");
+    loop {
+        let quote_response = jupiter_swap_api_client.quote(&quote_request).await.unwrap();
+        let price = quote_response.out_amount;
+        println!("{price:#?}");
+        thread::sleep(Duration::from_secs(1));
+    }
 
+}
+
+async fn macd() {
 }
 
 async fn swap(jupiter_swap_api_client: JupiterSwapApiClient, quote_response: QuoteResponse) {
