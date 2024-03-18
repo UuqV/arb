@@ -1,7 +1,7 @@
 use std::env;
 
 use jupiter_swap_api_client::{
-    quote::QuoteRequest, swap::SwapRequest, transaction_config::TransactionConfig,
+    quote::QuoteRequest, quote::QuoteResponse, swap::SwapRequest, transaction_config::TransactionConfig,
     JupiterSwapApiClient,
 };
 use solana_client::nonblocking::rpc_client::RpcClient;
@@ -14,7 +14,7 @@ const NATIVE_MINT: Pubkey = pubkey!("So11111111111111111111111111111111111111112
 
 pub const TEST_WALLET: Pubkey = pubkey!("2AQdpHJ2JpcEgPiATUXjQxA8QmafFegfQwSLWSprPicm"); // Coinbase 2 wallet
 
-async fn swap(quote_response) {
+async fn swap(quote_response: quote::QuoteResponse) {
     // POST /swap
     let swap_response = jupiter_swap_api_client
         .swap(&SwapRequest {
