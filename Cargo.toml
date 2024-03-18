@@ -1,13 +1,13 @@
-[workspace]
-members = [
-    "jupiter-swap-api-client",
-    "arbot",
-]
-resolver = "1"
-
-[workspace.package]
+[package]
+name = "arbot"
+version = "0.1.0"
+description = ""
 edition = "2021"
 
-[workspace.dependencies]
+[dependencies]
+tokio = { version = "1", features = ["full"] }
 solana-sdk = "1.14.23"
 solana-client = "1.14.23"
+bincode = "1.3.3"
+ta = "0.4.0"
+jupiter-swap-api-client = "0.1.0"
