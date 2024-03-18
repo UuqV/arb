@@ -37,7 +37,7 @@ async fn main() {
         ..QuoteRequest::default()
     };
 
-    let initial_funding: f64 = 10000.0;
+    let initial_funding: f64 = 1000.0;
     let mut funding : f64 = initial_funding;
     let mut profit: f64 = 0.0;
     let mut buys : u64 = 0;
@@ -59,7 +59,7 @@ async fn main() {
                 else if hist > 0.1 && buys > 0 {
                     funding = funding + price;
                     if funding > initial_funding {
-                        profit = funding - initial_funding;
+                        profit = profit + (funding - initial_funding);
                         funding = initial_funding;
                     }
                     buys -= 1;
