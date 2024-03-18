@@ -41,6 +41,9 @@ async fn main() {
     let mut funding : f64 = initial_funding;
     let mut profit: f64 = 0.0;
     let mut buys : u64 = 0;
+    println!("Initial funding: {initial_funding:#?}");
+    println!("Algorithm: Solid Buy");
+    println!("Price, Histogram, Buys, Funding, Profit");
 
     // GET /quote
     loop {
@@ -48,14 +51,12 @@ async fn main() {
             Ok(quote_response) => {
                 let price = quote_response.out_amount as f64 / 100.0;
                 let next = macd.next(price);
-                println!("Initial funding: {initial_funding:#?}");
-                println!("Price: {price:#?}");
-                println!("{next:#?}");
-                if next.histogram < -0.1 && funding > price {
+                let hist = next.histogram;
+                if hist < -0.1 && funding > price {
                     funding = funding - price;
                     buys += 1;
                 }
-                else if next.histogram > 0.1 && buys > 0 {
+                else if hist > 0.1 && buys > 0 {
                     funding = funding + price;
                     if funding > initial_funding {
                         profit = funding - initial_funding;
@@ -64,14 +65,12 @@ async fn main() {
                     buys -= 1;
                 }
 
-                println!("Buys: {buys:#?}");
-                println!("Funding: {funding:#?}");
-                println!("Profit: {profit:#?}");
+
+                println!("{price:#?}, {hist:#?}, {buys:#?}, {funding:#?}, {profit:#?}");
 
                 thread::sleep(Duration::from_secs(2));
             },
             Err(e) => {
-                eprintln!("Error getting quote: {:?}", e);
                 thread::sleep(Duration::from_secs(2));
             }
         }
