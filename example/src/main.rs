@@ -37,7 +37,8 @@ async fn main() {
         ..QuoteRequest::default()
     };
 
-    let mut profit : f64 = 1000.0;
+    let mut funding : f64 = 1000.0;
+    let mut profit: f64 = 0.0;
     let mut buys : u64 = 0;
 
     // GET /quote
@@ -45,18 +46,23 @@ async fn main() {
         let quote_response = jupiter_swap_api_client.quote(&quote_request).await.unwrap();
         let price = quote_response.out_amount as f64 / 100.0;
         let next = macd.next(price);
-        println!("{price:#?}");
+        println!("Price: {price:#?}");
         println!("{next:#?}");
-        if next.histogram < -0.1 && profit > price {
-            profit = profit - price;
+        if next.histogram < -0.1 && funding > price {
+            funding = funding - price;
             buys += 1;
         }
         else if next.histogram > 0.1 && buys > 0 {
-            profit = profit + price;
+            funding = funding + price;
+            if funding > 1000.0 {
+                profit = funding - 1000.0;
+                funding = 1000.0;
+            }
             buys -= 1;
         }
 
         println!("Buys: {buys:#?}");
+        println!("Funding: {funding:#?}");
         println!("Profit: {profit:#?}");
 
         thread::sleep(Duration::from_secs(2));
