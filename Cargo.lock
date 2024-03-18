@@ -129,6 +129,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a4668cab20f66d8d020e1fbc0ebe47217433c1b6c8f2040faf858554e394ace6"
 
 [[package]]
+name = "arbot"
+version = "0.1.0"
+dependencies = [
+ "bincode",
+ "jupiter-swap-api-client",
+ "solana-client",
+ "solana-sdk",
+ "ta",
+ "tokio",
+]
+
+[[package]]
 name = "arrayref"
 version = "0.3.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1013,18 +1025,6 @@ name = "event-listener"
 version = "2.5.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0206175f82b8d6bf6652ff7d71a1e27fd2e4efde587fd368662814d6ec1d9ce0"
-
-[[package]]
-name = "example"
-version = "0.1.0"
-dependencies = [
- "bincode",
- "jupiter-swap-api-client",
- "solana-client",
- "solana-sdk",
- "ta",
- "tokio",
-]
 
 [[package]]
 name = "fastrand"

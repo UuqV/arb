@@ -1,7 +1,7 @@
 [workspace]
 members = [
     "jupiter-swap-api-client",
-    "example",
+    "arbot",
 ]
 
 [workspace.package]

@@ -1,5 +1,5 @@
 [package]
-name = "example"
+name = "arbot"
 version = "0.1.0"
 description = ""
 edition = { workspace = true }
