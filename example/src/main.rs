@@ -37,7 +37,8 @@ async fn main() {
         ..QuoteRequest::default()
     };
 
-    let mut funding : f64 = 10000.0;
+    let initial_funding: f64 = 10000.0;
+    let mut funding : f64 = initial_funding;
     let mut profit: f64 = 0.0;
     let mut buys : u64 = 0;
 
@@ -47,6 +48,7 @@ async fn main() {
             Ok(quote_response) => {
                 let price = quote_response.out_amount as f64 / 100.0;
                 let next = macd.next(price);
+                println!("Initial funding: {initial_funding:#?}");
                 println!("Price: {price:#?}");
                 println!("{next:#?}");
                 if next.histogram < -0.1 && funding > price {
@@ -55,9 +57,9 @@ async fn main() {
                 }
                 else if next.histogram > 0.1 && buys > 0 {
                     funding = funding + price;
-                    if funding > 1000.0 {
-                        profit = funding - 1000.0;
-                        funding = 1000.0;
+                    if funding > initial_funding {
+                        profit = funding - initial_funding;
+                        funding = initial_funding;
                     }
                     buys -= 1;
                 }
