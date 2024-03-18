@@ -13,6 +13,8 @@ use std::thread;
 use std::time::Duration;
 use tokio;
 
+mod logic;
+
 const USDC_MINT: Pubkey = pubkey!("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v");
 const NATIVE_MINT: Pubkey = pubkey!("So11111111111111111111111111111111111111112");
 
@@ -52,11 +54,11 @@ async fn main() {
                 let price = quote_response.out_amount as f64 / 100.0;
                 let next = macd.next(price);
                 let hist = next.histogram;
-                if hist < -0.1 && funding > price {
+                if logic::should_buy(hist, funding, price) {
                     funding = funding - price;
                     buys += 1;
                 }
-                else if hist > 0.1 && buys > 0 {
+                else if logic::should_sell(hist, buys) {
                     funding = funding + price;
                     if funding > initial_funding {
                         profit = profit + (funding - initial_funding);
