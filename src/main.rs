@@ -4,8 +4,8 @@ use jupiter_swap_api_client::{
     quote::QuoteRequest,
     JupiterSwapApiClient,
 };
-use solana_sdk::{pubkey};
-use solana_sdk::{pubkey::Pubkey};
+use solana_sdk::pubkey;
+use solana_sdk::pubkey::Pubkey;
 use ta::indicators::MovingAverageConvergenceDivergence as Macd;
 use ta::Next;
 use std::thread;
