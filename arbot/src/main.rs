@@ -72,7 +72,7 @@ async fn main() {
 
                 thread::sleep(Duration::from_secs(2));
             },
-            Err(e) => {
+            Err(_) => {
                 thread::sleep(Duration::from_secs(2));
             }
         }
