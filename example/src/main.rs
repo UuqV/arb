@@ -27,35 +27,36 @@ async fn main() {
 
     let jupiter_swap_api_client = JupiterSwapApiClient::new(api_base_url);
 
-    let mut macd = Macd::new(3, 6, 4).unwrap();
+    let mut macd = Macd::new(12, 26, 9).unwrap();
     
     let quote_request = QuoteRequest {
-        amount: 1_000,
-        input_mint: USDC_MINT,
-        output_mint: NATIVE_MINT,
+        amount: 100000,
+        input_mint: NATIVE_MINT,
+        output_mint: USDC_MINT,
         slippage_bps: 50,
         ..QuoteRequest::default()
     };
 
-    let mut profit : f64 = 10000.0;
+    let mut profit : f64 = 1000.0;
     let mut buys : u64 = 0;
 
     // GET /quote
     loop {
         let quote_response = jupiter_swap_api_client.quote(&quote_request).await.unwrap();
-        let price = quote_response.out_amount as f64;
+        let price = quote_response.out_amount as f64 / 100.0;
         let next = macd.next(price);
         println!("{price:#?}");
         println!("{next:#?}");
-        if next.histogram < -1.0 && profit > price {
+        if next.histogram < -0.1 && profit > price {
             profit = profit - price;
             buys += 1;
         }
-        else if next.histogram > 1.0 && buys > 0 {
+        else if next.histogram > 0.1 && buys > 0 {
             profit = profit + price;
             buys -= 1;
         }
 
+        println!("Buys: {buys:#?}");
         println!("Profit: {profit:#?}");
 
         thread::sleep(Duration::from_secs(2));
