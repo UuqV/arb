@@ -61,7 +61,7 @@ async fn macd() {
                     funding = funding - price;
                     buys += 1;
                 }
-                else if logic::should_sell(hist, buys) {
+                else if logic::should_sell(hist, funding, buys) {
                     funding = funding + price;
                     if funding > initial_funding {
                         profit = profit + (funding - initial_funding);
