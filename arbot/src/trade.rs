@@ -56,7 +56,3 @@ async fn swap(quote_response) {
         .unwrap();
     println!("swap_instructions: {swap_instructions:?}");
 }
-
-async fn sign() {
-    
-}

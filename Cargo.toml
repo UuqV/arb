@@ -3,6 +3,7 @@ members = [
     "jupiter-swap-api-client",
     "arbot",
 ]
+resolver = "1"
 
 [workspace.package]
 edition = "2021"
