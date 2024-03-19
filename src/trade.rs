@@ -45,21 +45,11 @@ pub async fn swap(quote_response: QuoteResponse, jupiter_swap_api_client: Jupite
     
                                 match VersionedTransaction::try_new(versioned_transaction.message, &[&keypair]) {
                                     Ok(signed_versioned_transaction) => {
-                                        let error = rpc_client
+                                        let notError = rpc_client
                                             .send_and_confirm_transaction(&signed_versioned_transaction)
                                             .await
-                                            .unwrap_err();
-                                        println!("{error}");
-
-                                        // POST /swap-instructions
-                                        let swap_instructions = jupiter_swap_api_client
-                                            .swap_instructions(&SwapRequest {
-                                                user_public_key: TEST_WALLET,
-                                                quote_response,
-                                                config: TransactionConfig::default(),
-                                            })
-                                            .await
                                             .unwrap();
+                                        println!("{notError}");
                                     }
                                     Err(e) => {
                                         println!("Signer error");
