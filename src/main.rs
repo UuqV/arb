@@ -47,11 +47,18 @@ async fn main() {
     }
 }
 
-async fn get_token_account_balance(rpc_client: RpcClient, token_address: Pubkey) {
+async fn get_token_account_balance(rpc_client: &RpcClient, token_address: Pubkey) -> f64 {
     let associated_token_address = get_associated_token_address(&TEST_WALLET, &token_address);
     let account_data = rpc_client.get_token_account_balance(&associated_token_address).await.unwrap();
-    println!("Token Balance (using Rust): {}", account_data.ui_amount_string);
+    return account_data.ui_amount.unwrap();
 }
+
+async fn get_sol_balance(rpc_client: &RpcClient) -> f64 {
+    let account_data = rpc_client.get_account(&TEST_WALLET).await.unwrap();
+    let lamports = account_data.lamports;
+    return (lamports / 1000000000) as f64;
+}
+
 
 
 async fn macd(keypair: Keypair) {
@@ -72,11 +79,10 @@ async fn macd(keypair: Keypair) {
         ..QuoteRequest::default()
     };
 
-    let initial_funding: f64 = 1000.0;
-    get_token_account_balance(rpc_client, USDC_MINT).await;
+    let initial_funding: f64 = get_token_account_balance(&rpc_client, USDC_MINT).await;
+    let mut sol : f64 = get_sol_balance(&rpc_client).await;
     let mut usdc : f64 = initial_funding;
     let mut profit: f64 = 0.0;
-    let mut sol : f64 = 0.0;
     println!("Initial funding: {initial_funding:#?}");
     println!("Algorithm: Solid Buy");
     println!("Sell, Histogram, SOL, USDC, Profit");
