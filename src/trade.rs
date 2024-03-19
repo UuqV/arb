@@ -45,11 +45,14 @@ pub async fn swap(quote_response: QuoteResponse, jupiter_swap_api_client: Jupite
     
                                 match VersionedTransaction::try_new(versioned_transaction.message, &[&keypair]) {
                                     Ok(signed_versioned_transaction) => {
-                                        let notError = rpc_client
-                                            .send_and_confirm_transaction(&signed_versioned_transaction)
-                                            .await
-                                            .unwrap();
-                                        println!("{notError}");
+                                        match rpc_client.send_and_confirm_transaction(&signed_versioned_transaction).await {
+                                            Ok(transaction_sig) => {
+                                                println!("{transaction_sig}");
+                                            }
+                                            Err(_e) => {
+                                                println!("{_e}");
+                                            }
+                                        };
                                     }
                                     Err(e) => {
                                         println!("Signer error");
