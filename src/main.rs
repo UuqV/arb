@@ -27,7 +27,7 @@ const NATIVE_DECIMALS: f64 = 0.000000001;
 
 pub const TEST_WALLET: Pubkey = pubkey!("EVx7u3fzMPcNixmSNtriDCmpEZngHWH6LffhLzSeitCx");
 
-pub const SELL_AMOUNT_LAMP: u64 = 1_000_000; // 1_000_000_000 = 1 SOL
+pub const SELL_AMOUNT_LAMP: u64 = 100_000_000; // 1_000_000_000 = 1 SOL
 pub const SELL_AMOUNT_SOL: f64 = SELL_AMOUNT_LAMP as f64 * NATIVE_DECIMALS;
 
 pub const HIST_THRESHOLD: f64 = SELL_AMOUNT_SOL * 0.01;
@@ -117,7 +117,7 @@ async fn macd(keypair: Keypair) {
                     amount: sell_amount,
                     input_mint: USDC_MINT,
                     output_mint: NATIVE_MINT,
-                    slippage_bps: 50,
+                    slippage_bps: 100,
                     ..QuoteRequest::default()
                 };
 
@@ -135,7 +135,10 @@ async fn macd(keypair: Keypair) {
                         let act_usdc: f64 = get_token_account_balance(&rpc_client, USDC_MINT).await;
                         let act_sol: f64 = get_sol_balance(&rpc_client).await;
 
-                        println!("{price:.6}, {hist:.9}, {sol:.9}, {act_sol:.9}, {usdc:.6}, {act_usdc:.6}, {buy_flag}");
+                        let usdc_diff: f64 = act_usdc - usdc;
+                        let sol_diff: f64 = act_sol - sol;
+
+                        println!("{price:.6}, {hist:.9}, {sol_diff:.9}, {usdc_diff:.6}, {sol:.9}, {usdc:.6}, {buy_flag}");
                     },
                     Err(_e) => {
                         thread::sleep(Duration::from_secs(2));

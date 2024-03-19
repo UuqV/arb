@@ -1,9 +1,9 @@
 pub fn should_buy(hist: f64, funding: f64, price: f64, hist_threshold: f64) -> bool {
-    return hist < -(hist_threshold as f64) && funding > price;
+    return hist < -(hist_threshold) && funding > price;
 }
 
 pub fn should_sell(hist: f64, sol: f64, price: f64, hist_threshold: f64) -> bool {
-    return hist > hist_threshold as f64 && sol > price;
+    return hist > hist_threshold && sol > price;
 }
 
 
