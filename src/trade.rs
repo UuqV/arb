@@ -12,7 +12,7 @@ use tokio;
 
 pub const TEST_WALLET: Pubkey = pubkey!("EVx7u3fzMPcNixmSNtriDCmpEZngHWH6LffhLzSeitCx");
 
-pub async fn swap(quote_response: QuoteResponse, jupiter_swap_api_client: JupiterSwapApiClient) {
+pub async fn swap(quote_response: QuoteResponse, jupiter_swap_api_client: JupiterSwapApiClient, rpc_client: RpcClient) {
 
     println!("swap");
 
@@ -33,7 +33,6 @@ pub async fn swap(quote_response: QuoteResponse, jupiter_swap_api_client: Jupite
                             Ok(keypair) => {
                                 let mut versioned_transaction: VersionedTransaction = bincode::deserialize(&swap_response.swap_transaction).unwrap();
 
-                                let rpc_client = RpcClient::new("https://api.mainnet-beta.solana.com".into());
                                 //Get the latest blockhash with rpc client
                                 let latest_blockhash = rpc_client
                                     .get_latest_blockhash()

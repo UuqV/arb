@@ -11,9 +11,13 @@ use ta::Next;
 use std::thread;
 use std::time::Duration;
 use solana_sdk::{signature::read_keypair_file, signature::Keypair};
+use solana_client::nonblocking::rpc_client::RpcClient;
+use spl_associated_token_account::get_associated_token_address;
+use std::str::FromStr;
 use tokio;
 
 mod logic;
+mod trade;
 
 const USDC_MINT: Pubkey = pubkey!("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v");
 const USDC_DECIMALS: f64 = 0.000001;
@@ -21,9 +25,7 @@ const USDC_DECIMALS: f64 = 0.000001;
 const NATIVE_MINT: Pubkey = pubkey!("So11111111111111111111111111111111111111112");
 const NATIVE_DECIMALS: f64 = 0.000000001;
 
-pub const TEST_WALLET: Pubkey = pubkey!("2AQdpHJ2JpcEgPiATUXjQxA8QmafFegfQwSLWSprPicm"); // Coinbase 2 wallet
-
-
+pub const TEST_WALLET: Pubkey = pubkey!("EVx7u3fzMPcNixmSNtriDCmpEZngHWH6LffhLzSeitCx");
 
 #[tokio::main]
 async fn main() {
@@ -45,6 +47,12 @@ async fn main() {
     }
 }
 
+async fn get_token_account_balance(rpc_client: RpcClient, token_address: Pubkey) {
+    let associated_token_address = get_associated_token_address(&TEST_WALLET, &token_address);
+    let account_data = rpc_client.get_token_account_balance(&associated_token_address).await.unwrap();
+    println!("Token Balance (using Rust): {}", account_data.ui_amount_string);
+}
+
 
 async fn macd(keypair: Keypair) {
     let api_base_url = env::var("API_BASE_URL").unwrap_or("https://quote-api.jup.ag/v6".into());
@@ -54,9 +62,10 @@ async fn macd(keypair: Keypair) {
 
     let mut macd = Macd::new(12, 26, 9).unwrap();
 
+    let rpc_client = RpcClient::new("https://api.mainnet-beta.solana.com".into());
         
     let sell_request = QuoteRequest {
-        amount: 1000000000,
+        amount: 100,
         input_mint: NATIVE_MINT,
         output_mint: USDC_MINT,
         slippage_bps: 50,
@@ -64,6 +73,7 @@ async fn macd(keypair: Keypair) {
     };
 
     let initial_funding: f64 = 1000.0;
+    get_token_account_balance(rpc_client, USDC_MINT).await;
     let mut usdc : f64 = initial_funding;
     let mut profit: f64 = 0.0;
     let mut sol : f64 = 0.0;
