@@ -62,7 +62,8 @@ async fn macd() {
 
             trade::swap(quote_response, jupiter_swap_api_client).await;
         },
-        Err(_) => {
+        Err(_e) => {
+            println!("Quote error: {_e:#?}");
         }
     }
 

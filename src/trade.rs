@@ -27,20 +27,30 @@ pub async fn swap(quote_response: QuoteResponse, jupiter_swap_api_client: Jupite
 
                 println!("Raw tx len: {}", swap_response.swap_transaction.len());
 
-                let versioned_transaction: VersionedTransaction = bincode::deserialize(&swap_response.swap_transaction).unwrap();
                 match env::var("ARBOT_KEY") {
                     Ok(key_string) => {
                         match read_keypair_file(key_string) {
                             Ok(keypair) => {
+                                let mut versioned_transaction: VersionedTransaction = bincode::deserialize(&swap_response.swap_transaction).unwrap();
+
+                                let rpc_client = RpcClient::new("https://api.mainnet-beta.solana.com".into());
+                                //Get the latest blockhash with rpc client
+                                let latest_blockhash = rpc_client
+                                    .get_latest_blockhash()
+                                    .await
+                                    .unwrap();
+                            
+                                //Set recent_blockhash to the latest_blockhash obtained
+                                versioned_transaction.message.set_recent_blockhash(latest_blockhash);
+    
                                 match VersionedTransaction::try_new(versioned_transaction.message, &[&keypair]) {
                                     Ok(signed_versioned_transaction) => {
-                                        // send with rpc client...
-                                        let rpc_client = RpcClient::new("https://api.mainnet-beta.solana.com".into());
-                                        let transaction = rpc_client
+                                        let error = rpc_client
                                             .send_and_confirm_transaction(&signed_versioned_transaction)
                                             .await
-                                            .unwrap();
-    
+                                            .unwrap_err();
+                                        println!("{error}");
+
                                         // POST /swap-instructions
                                         let swap_instructions = jupiter_swap_api_client
                                             .swap_instructions(&SwapRequest {
@@ -50,7 +60,6 @@ pub async fn swap(quote_response: QuoteResponse, jupiter_swap_api_client: Jupite
                                             })
                                             .await
                                             .unwrap();
-                                        println!("swap_instructions: {swap_instructions:?}");
                                     }
                                     Err(e) => {
                                         println!("Signer error");
@@ -63,7 +72,7 @@ pub async fn swap(quote_response: QuoteResponse, jupiter_swap_api_client: Jupite
                         };
                     },
                     Err(e) => match e {
-                        env::VarError::NotPresent => println!("Environment variable not found."),
+                        env::VarError::NotPresent => println!("Key not found."),
                         env::VarError::NotUnicode(os_string) => println!("Environment variable contains invalid unicode data: {:?}", os_string),
                     },
                 }
