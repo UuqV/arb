@@ -27,6 +27,11 @@ const NATIVE_DECIMALS: f64 = 0.000000001;
 
 pub const TEST_WALLET: Pubkey = pubkey!("EVx7u3fzMPcNixmSNtriDCmpEZngHWH6LffhLzSeitCx");
 
+pub const SELL_AMOUNT_LAMP: u64 = 1_000_000; // 1_000_000_000 = 1 SOL
+pub const SELL_AMOUNT_SOL: f64 = SELL_AMOUNT_LAMP as f64 * NATIVE_DECIMALS;
+
+pub const HIST_THRESHOLD: f64 = SELL_AMOUNT_SOL * 0.01;
+
 #[tokio::main]
 async fn main() {
     match env::var("ARBOT_KEY") {
@@ -72,7 +77,7 @@ async fn macd(keypair: Keypair) {
     let rpc_client = RpcClient::new("https://api.mainnet-beta.solana.com".into());
         
     let sell_request = QuoteRequest {
-        amount: 100,
+        amount: SELL_AMOUNT_LAMP,
         input_mint: NATIVE_MINT,
         output_mint: USDC_MINT,
         slippage_bps: 50,
@@ -84,8 +89,10 @@ async fn macd(keypair: Keypair) {
     let mut usdc : f64 = initial_funding;
     let mut profit: f64 = 0.0;
     println!("Initial funding: {initial_funding:#?}");
+    println!("Sell amount: {SELL_AMOUNT_SOL:#?}");
+    println!("Hist threshold: {HIST_THRESHOLD:#?}");
     println!("Algorithm: Solid Buy");
-    println!("Sell, Histogram, SOL, USDC, Profit");
+    println!("Price, Histogram, SOL, USDC, Profit");
 
     // GET /quote
     loop {
@@ -97,13 +104,13 @@ async fn macd(keypair: Keypair) {
                 let next = macd.next(price);
                 let hist = next.histogram;
 
-                if logic::should_sell(hist, usdc, sol) {
+                if logic::should_sell(hist, sol, SELL_AMOUNT_SOL, HIST_THRESHOLD) {
                     usdc = usdc + price;
                     if usdc > initial_funding {
                         profit = profit + (usdc - initial_funding);
                         usdc = initial_funding;
                     }
-                    sol = sol - 1.0;
+                    sol = sol - SELL_AMOUNT_SOL;
                 }
 
                 let buy_request = QuoteRequest {
@@ -116,7 +123,7 @@ async fn macd(keypair: Keypair) {
 
                 match jupiter_swap_api_client.quote(&buy_request).await {
                     Ok(buy_response) => {
-                        if logic::should_buy(hist, usdc, price) {
+                        if logic::should_buy(hist, usdc, price, HIST_THRESHOLD) {
                             usdc = usdc - price;
                             sol = sol + buy_response.out_amount as f64 * NATIVE_DECIMALS;
                         }
@@ -124,13 +131,12 @@ async fn macd(keypair: Keypair) {
                     },
                     Err(_e) => {
                         thread::sleep(Duration::from_secs(2));
-
                     }
                 }
 
                 thread::sleep(Duration::from_secs(2));
             },
-            Err(_) => {
+            Err(_e) => {
                 thread::sleep(Duration::from_secs(2));
             }
         }
