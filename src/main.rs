@@ -56,7 +56,7 @@ async fn get_token_account_balance(rpc_client: &RpcClient, token_address: Pubkey
 async fn get_sol_balance(rpc_client: &RpcClient) -> f64 {
     let account_data = rpc_client.get_account(&TEST_WALLET).await.unwrap();
     let lamports = account_data.lamports;
-    return (lamports / 1000000000) as f64;
+    return lamports as f64 * NATIVE_DECIMALS;
 }
 
 
