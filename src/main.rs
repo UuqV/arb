@@ -92,19 +92,20 @@ async fn macd(keypair: Keypair) {
     println!("Sell amount: {SELL_AMOUNT_SOL:#?}");
     println!("Hist threshold: {HIST_THRESHOLD:#?}");
     println!("Algorithm: Solid Buy");
-    println!("Price, Histogram, SOL, USDC, Profit");
+    println!("Price, Histogram, ExSOL, ActSOL, ExUSDC, ActUSDC, Profit");
 
     // GET /quote
     loop {
         match jupiter_swap_api_client.quote(&sell_request).await {
             Ok(sell_response) => {
 
-
-                let price = sell_response.out_amount as f64 * USDC_DECIMALS;
+                let sell_amount: u64 = sell_response.out_amount;
+                let price = sell_amount as f64 * USDC_DECIMALS;
                 let next = macd.next(price);
                 let hist = next.histogram;
 
                 if logic::should_sell(hist, sol, SELL_AMOUNT_SOL, HIST_THRESHOLD) {
+                    trade::swap(sell_response, &jupiter_swap_api_client, &rpc_client).await;
                     usdc = usdc + price;
                     if usdc > initial_funding {
                         profit = profit + (usdc - initial_funding);
@@ -114,7 +115,7 @@ async fn macd(keypair: Keypair) {
                 }
 
                 let buy_request = QuoteRequest {
-                    amount: sell_response.out_amount,
+                    amount: sell_amount,
                     input_mint: USDC_MINT,
                     output_mint: NATIVE_MINT,
                     slippage_bps: 50,
@@ -123,11 +124,16 @@ async fn macd(keypair: Keypair) {
 
                 match jupiter_swap_api_client.quote(&buy_request).await {
                     Ok(buy_response) => {
+                        let buy_amount: u64 = buy_response.out_amount;
                         if logic::should_buy(hist, usdc, price, HIST_THRESHOLD) {
+                            trade::swap(buy_response, &jupiter_swap_api_client, &rpc_client).await;
                             usdc = usdc - price;
-                            sol = sol + buy_response.out_amount as f64 * NATIVE_DECIMALS;
+                            sol = sol + buy_amount as f64 * NATIVE_DECIMALS;
                         }
-                        println!("{price:#?}, {hist:#?}, {sol:#?}, {usdc:#?}, {profit:#?}");
+                        let act_usdc: f64 = get_token_account_balance(&rpc_client, USDC_MINT).await;
+                        let act_sol: f64 = get_sol_balance(&rpc_client).await;
+
+                        println!("{price:#?}, {hist:.9}, {sol:.9}, {act_sol:.9}, {usdc:.6}, {act_usdc:.6}, {profit:.6}");
                     },
                     Err(_e) => {
                         thread::sleep(Duration::from_secs(2));

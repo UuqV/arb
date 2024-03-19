@@ -12,7 +12,7 @@ use tokio;
 
 pub const TEST_WALLET: Pubkey = pubkey!("EVx7u3fzMPcNixmSNtriDCmpEZngHWH6LffhLzSeitCx");
 
-pub async fn swap(quote_response: QuoteResponse, jupiter_swap_api_client: JupiterSwapApiClient, rpc_client: RpcClient) {
+pub async fn swap(quote_response: QuoteResponse, jupiter_swap_api_client: &JupiterSwapApiClient, rpc_client: &RpcClient) {
 
     println!("swap");
 
@@ -46,7 +46,6 @@ pub async fn swap(quote_response: QuoteResponse, jupiter_swap_api_client: Jupite
                                     Ok(signed_versioned_transaction) => {
                                         match rpc_client.send_and_confirm_transaction(&signed_versioned_transaction).await {
                                             Ok(transaction_sig) => {
-                                                println!("{transaction_sig}");
                                             }
                                             Err(_e) => {
                                                 println!("{_e}");
