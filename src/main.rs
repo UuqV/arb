@@ -40,7 +40,7 @@ async fn macd() {
     let mut macd = Macd::new(12, 26, 9).unwrap();
     
     let quote_request = QuoteRequest {
-        amount: 100000,
+        amount: 100,
         input_mint: NATIVE_MINT,
         output_mint: USDC_MINT,
         slippage_bps: 50,

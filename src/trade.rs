@@ -24,57 +24,49 @@ pub async fn swap(quote_response: QuoteResponse, jupiter_swap_api_client: Jupite
         })
         .await {
             Ok(swap_response) => {
-                println!("Swap response");
 
                 println!("Raw tx len: {}", swap_response.swap_transaction.len());
 
-                let versioned_transaction: VersionedTransaction =
-                bincode::deserialize(&swap_response.swap_transaction).unwrap();
-                    match env::var("ARBOT_KEY") {
-                        Ok(key_string) => {
-                            match read_keypair_file(key_string) {
-                                Ok(keypair) => {
-                                    match VersionedTransaction::try_new(versioned_transaction.message, &[&keypair]) {
-                                        Ok(signed_versioned_transaction) => {
-                                            // send with rpc client...
-                                            let rpc_client = RpcClient::new("https://api.devnet.solana.com".into());
-        
-                                            // This will fail with "Transaction signature verification failure" as we did not really sign
-                                            let error = rpc_client
-                                                .send_and_confirm_transaction(&signed_versioned_transaction)
-                                                .await
-                                                .unwrap_err();
-                                            println!("{error}");
-        
-                                            // POST /swap-instructions
-                                            let swap_instructions = jupiter_swap_api_client
-                                                .swap_instructions(&SwapRequest {
-                                                    user_public_key: TEST_WALLET,
-                                                    quote_response,
-                                                    config: TransactionConfig::default(),
-                                                })
-                                                .await
-                                                .unwrap();
-                                            println!("swap_instructions: {swap_instructions:?}");
-                                        }
-                                        Err(e) => {
-                                            println!("Signer error");
-                                        }
-                                    };
-
-                                },
-                                Err(e) => {
-                                    println!("Pubkey error");
-                                }
-                            };
-
-                        },
-                        Err(e) => match e {
-                            env::VarError::NotPresent => println!("Environment variable not found."),
-                            env::VarError::NotUnicode(os_string) => println!("Environment variable contains invalid unicode data: {:?}", os_string),
-                        },
-                    }
-                
+                let versioned_transaction: VersionedTransaction = bincode::deserialize(&swap_response.swap_transaction).unwrap();
+                match env::var("ARBOT_KEY") {
+                    Ok(key_string) => {
+                        match read_keypair_file(key_string) {
+                            Ok(keypair) => {
+                                match VersionedTransaction::try_new(versioned_transaction.message, &[&keypair]) {
+                                    Ok(signed_versioned_transaction) => {
+                                        // send with rpc client...
+                                        let rpc_client = RpcClient::new("https://api.mainnet-beta.solana.com".into());
+                                        let transaction = rpc_client
+                                            .send_and_confirm_transaction(&signed_versioned_transaction)
+                                            .await
+                                            .unwrap();
+    
+                                        // POST /swap-instructions
+                                        let swap_instructions = jupiter_swap_api_client
+                                            .swap_instructions(&SwapRequest {
+                                                user_public_key: TEST_WALLET,
+                                                quote_response,
+                                                config: TransactionConfig::default(),
+                                            })
+                                            .await
+                                            .unwrap();
+                                        println!("swap_instructions: {swap_instructions:?}");
+                                    }
+                                    Err(e) => {
+                                        println!("Signer error");
+                                    }
+                                };
+                            },
+                            Err(e) => {
+                                println!("Pubkey error");
+                            }
+                        };
+                    },
+                    Err(e) => match e {
+                        env::VarError::NotPresent => println!("Environment variable not found."),
+                        env::VarError::NotUnicode(os_string) => println!("Environment variable contains invalid unicode data: {:?}", os_string),
+                    },
+                }
             },
             Err(_e) => {
                 println!("Error: {_e:#?}");
