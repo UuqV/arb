@@ -10,7 +10,6 @@ use ta::indicators::MovingAverageConvergenceDivergence as Macd;
 use ta::Next;
 use std::thread;
 use std::time::Duration;
-use futures::try_join;
 use tokio;
 
 mod logic;
