@@ -20,26 +20,10 @@ use std::time::Duration;
 use tokio;
 
 mod logic;
+mod trade;
 
 const USDC_MINT: Pubkey = pubkey!("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v");
 const NATIVE_MINT: Pubkey = pubkey!("So11111111111111111111111111111111111111112");
-
-pub const TEST_WALLET: Pubkey = pubkey!("2AQdpHJ2JpcEgPiATUXjQxA8QmafFegfQwSLWSprPicm"); // Coinbase 2 wallet
-// declare and export the program's entrypoint
-entrypoint!(process_instruction);
-
-// program entrypoint's implementation
-pub fn process_instruction(
-    program_id: &Pubkey,
-    accounts: &[AccountInfo],
-    instruction_data: &[u8]
-) -> ProgramResult {
-    // log a message to the blockchain
-    msg!("Hello, world!");
-
-    // gracefully exit the program
-    Ok(())
-}
 
 
 #[tokio::main]
@@ -72,32 +56,13 @@ async fn macd() {
     println!("Price, Histogram, Buys, Funding, Profit");
 
     // GET /quote
-    loop {
-        match jupiter_swap_api_client.quote(&quote_request).await {
-            Ok(quote_response) => {
-                let price = quote_response.out_amount as f64 / 100.0;
-                let next = macd.next(price);
-                let hist = next.histogram;
-                if logic::should_buy(hist, funding, price) {
-                    funding = funding - price;
-                    buys += 1;
-                }
-                else if logic::should_sell(hist, funding, buys) {
-                    funding = funding + price;
-                    if funding > initial_funding {
-                        profit = profit + (funding - initial_funding);
-                        funding = initial_funding;
-                    }
-                    buys -= 1;
-                }
+    match jupiter_swap_api_client.quote(&quote_request).await {
+        Ok(quote_response) => {
+            println!("Quote response: {quote_response:#?}");
 
-                println!("{price:#?}, {hist:#?}, {buys:#?}, {funding:#?}, {profit:#?}");
-
-                thread::sleep(Duration::from_secs(2));
-            },
-            Err(_) => {
-                thread::sleep(Duration::from_secs(2));
-            }
+            trade::swap(quote_response, jupiter_swap_api_client).await;
+        },
+        Err(_) => {
         }
     }
 
