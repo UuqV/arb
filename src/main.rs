@@ -1,11 +1,18 @@
 use std::env;
 
+use solana_program::{
+    account_info::AccountInfo,
+    entrypoint,
+    entrypoint::ProgramResult,
+    pubkey::Pubkey,
+    msg,
+};
+
 use jupiter_swap_api_client::{
     quote::QuoteRequest,
     JupiterSwapApiClient,
 };
 use solana_sdk::pubkey;
-use solana_sdk::pubkey::Pubkey;
 use ta::indicators::MovingAverageConvergenceDivergence as Macd;
 use ta::Next;
 use std::thread;
@@ -18,7 +25,21 @@ const USDC_MINT: Pubkey = pubkey!("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
 const NATIVE_MINT: Pubkey = pubkey!("So11111111111111111111111111111111111111112");
 
 pub const TEST_WALLET: Pubkey = pubkey!("2AQdpHJ2JpcEgPiATUXjQxA8QmafFegfQwSLWSprPicm"); // Coinbase 2 wallet
+// declare and export the program's entrypoint
+entrypoint!(process_instruction);
 
+// program entrypoint's implementation
+pub fn process_instruction(
+    program_id: &Pubkey,
+    accounts: &[AccountInfo],
+    instruction_data: &[u8]
+) -> ProgramResult {
+    // log a message to the blockchain
+    msg!("Hello, world!");
+
+    // gracefully exit the program
+    Ok(())
+}
 
 
 #[tokio::main]
