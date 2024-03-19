@@ -10,6 +10,7 @@ use ta::indicators::MovingAverageConvergenceDivergence as Macd;
 use ta::Next;
 use std::thread;
 use std::time::Duration;
+use solana_sdk::{signature::read_keypair_file, signature::Keypair};
 use tokio;
 
 mod logic;
@@ -26,10 +27,26 @@ pub const TEST_WALLET: Pubkey = pubkey!("2AQdpHJ2JpcEgPiATUXjQxA8QmafFegfQwSLWSp
 
 #[tokio::main]
 async fn main() {
-    macd().await;
+    match env::var("ARBOT_KEY") {
+        Ok(key_string) => {
+            match read_keypair_file(key_string) {
+                Ok(keypair) => {
+                    macd(keypair).await;
+                }
+                Err(_e) => {
+                    println!("Error: {_e:#?}");
+                }
+            }
+        }
+        Err(e) => match e {
+            std::env::VarError::NotPresent => println!("Key not found."),
+            std::env::VarError::NotUnicode(os_string) => println!("Environment variable contains invalid unicode data: {:?}", os_string),
+        }
+    }
 }
 
-async fn macd() {
+
+async fn macd(keypair: Keypair) {
     let api_base_url = env::var("API_BASE_URL").unwrap_or("https://quote-api.jup.ag/v6".into());
     println!("Using base url: {}", api_base_url);
 
