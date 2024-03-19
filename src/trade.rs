@@ -12,10 +12,7 @@ use tokio;
 
 pub const TEST_WALLET: Pubkey = pubkey!("EVx7u3fzMPcNixmSNtriDCmpEZngHWH6LffhLzSeitCx");
 
-pub async fn swap(quote_response: QuoteResponse, jupiter_swap_api_client: &JupiterSwapApiClient, rpc_client: &RpcClient) {
-
-    println!("swap");
-
+pub async fn swap(quote_response: QuoteResponse, jupiter_swap_api_client: &JupiterSwapApiClient, rpc_client: &RpcClient) -> bool {
     match jupiter_swap_api_client
         .swap(&SwapRequest {
             user_public_key: TEST_WALLET,
@@ -24,9 +21,6 @@ pub async fn swap(quote_response: QuoteResponse, jupiter_swap_api_client: &Jupit
         })
         .await {
             Ok(swap_response) => {
-
-                println!("Raw tx len: {}", swap_response.swap_transaction.len());
-
                 match env::var("ARBOT_KEY") {
                     Ok(key_string) => {
                         match read_keypair_file(key_string) {
@@ -46,30 +40,35 @@ pub async fn swap(quote_response: QuoteResponse, jupiter_swap_api_client: &Jupit
                                     Ok(signed_versioned_transaction) => {
                                         match rpc_client.send_and_confirm_transaction(&signed_versioned_transaction).await {
                                             Ok(transaction_sig) => {
+                                                return true;
                                             }
                                             Err(_e) => {
                                                 println!("{_e}");
+                                                return false;
                                             }
                                         };
                                     }
                                     Err(e) => {
                                         println!("Signer error");
+                                        return false;
                                     }
                                 };
                             },
                             Err(e) => {
                                 println!("Pubkey error");
+                                return false;
                             }
                         };
                     },
-                    Err(e) => match e {
-                        env::VarError::NotPresent => println!("Key not found."),
-                        env::VarError::NotUnicode(os_string) => println!("Environment variable contains invalid unicode data: {:?}", os_string),
+                    Err(_e) => {
+                        println!("Var error");
+                        return false;
                     },
                 }
             },
             Err(_e) => {
                 println!("Error: {_e:#?}");
+                return false;
             }
         }
 
