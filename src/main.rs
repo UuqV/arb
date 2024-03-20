@@ -1,4 +1,4 @@
-use std::env;
+use std::{env, sync::Arc};
 
 use jupiter_swap_api_client::{
     quote::QuoteRequest,
@@ -14,7 +14,7 @@ use solana_sdk::{signature::read_keypair_file, signature::Keypair};
 use solana_client::nonblocking::rpc_client::RpcClient;
 use spl_associated_token_account::get_associated_token_address;
 use std::str::FromStr;
-use tokio;
+use tokio::{self, sync::Mutex};
 
 mod logic;
 mod trade;
@@ -27,7 +27,7 @@ const NATIVE_DECIMALS: f64 = 0.000000001;
 
 pub const TEST_WALLET: Pubkey = pubkey!("EVx7u3fzMPcNixmSNtriDCmpEZngHWH6LffhLzSeitCx");
 
-pub const SELL_AMOUNT_LAMP: u64 = 100_000_000; // 1_000_000_000 = 1 SOL
+pub const SELL_AMOUNT_LAMP: u64 = 1_000_000_000; // 1_000_000_000 = 1 SOL
 pub const SELL_AMOUNT_SOL: f64 = SELL_AMOUNT_LAMP as f64 * NATIVE_DECIMALS;
 
 pub const HIST_THRESHOLD: f64 = SELL_AMOUNT_SOL * 0.1;
@@ -106,8 +106,9 @@ async fn macd(keypair: Keypair) {
 
                 if logic::should_sell(hist, sol, SELL_AMOUNT_SOL, HIST_THRESHOLD) {
                     buy_flag = "Sell";
+                    let sell_mutex = Arc::new(Mutex::new(sell_response));
                     tokio::spawn(async move {
-                        trade::swap(sell_response, &jupiter_swap_api_client, &rpc_client).await;
+                        trade::swap(sell_mutex).await;
                     });
                 }
 
@@ -123,8 +124,9 @@ async fn macd(keypair: Keypair) {
                     Ok(buy_response) => {
                         if logic::should_buy(hist, usdc, price, HIST_THRESHOLD) {
                             buy_flag = "Buy";
+                            let buy_mutex = Arc::new(Mutex::new(buy_response));
                             tokio::spawn(async move {
-                                trade::swap(buy_response, &jupiter_swap_api_client, &rpc_client).await;
+                                trade::swap(buy_mutex).await;
                             });
                         }
                         usdc = get_token_account_balance(&rpc_client, USDC_MINT).await;
