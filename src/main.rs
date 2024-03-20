@@ -27,7 +27,7 @@ const NATIVE_DECIMALS: f64 = 0.000000001;
 
 pub const TEST_WALLET: Pubkey = pubkey!("EVx7u3fzMPcNixmSNtriDCmpEZngHWH6LffhLzSeitCx");
 
-pub const SELL_AMOUNT_LAMP: u64 = 100_000_000; // 1_000_000_000 = 1 SOL
+pub const SELL_AMOUNT_LAMP: u64 = 1_000_000_000; // 1_000_000_000 = 1 SOL
 pub const SELL_AMOUNT_SOL: f64 = SELL_AMOUNT_LAMP as f64 * NATIVE_DECIMALS;
 
 pub const HIST_THRESHOLD: f64 = SELL_AMOUNT_SOL * 0.01;
