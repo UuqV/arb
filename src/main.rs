@@ -16,7 +16,8 @@ use spl_associated_token_account::get_associated_token_address;
 use std::str::FromStr;
 use tokio;
 
-mod logic;
+mod buy_logic;
+mod sell_logic;
 mod trade;
 
 const USDC_MINT: Pubkey = pubkey!("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v");
@@ -30,7 +31,7 @@ pub const TEST_WALLET: Pubkey = pubkey!("EVx7u3fzMPcNixmSNtriDCmpEZngHWH6LffhLzS
 pub const SELL_AMOUNT_LAMP: u64 = 1_000_000_000; // 1_000_000_000 = 1 SOL
 pub const SELL_AMOUNT_SOL: f64 = SELL_AMOUNT_LAMP as f64 * NATIVE_DECIMALS;
 
-pub const HIST_THRESHOLD: f64 = SELL_AMOUNT_SOL * 0.01;
+pub const HIST_THRESHOLD: f64 = SELL_AMOUNT_SOL * 0.05;
 
 #[tokio::main]
 async fn main() {
@@ -80,18 +81,19 @@ async fn macd(keypair: Keypair) {
         amount: SELL_AMOUNT_LAMP,
         input_mint: NATIVE_MINT,
         output_mint: USDC_MINT,
-        slippage_bps: 50,
+        slippage_bps: 100,
         ..QuoteRequest::default()
     };
 
     let initial_funding: f64 = get_token_account_balance(&rpc_client, USDC_MINT).await;
     let mut sol : f64 = get_sol_balance(&rpc_client).await;
     let mut usdc : f64 = initial_funding;
+    let mut last: f64 = 0.0;
     println!("Initial funding: {initial_funding:#?}");
     println!("Sell amount: {SELL_AMOUNT_SOL:#?}");
     println!("Hist threshold: {HIST_THRESHOLD:#?}");
     println!("Algorithm: Solid Buy");
-    println!("Price, Histogram, ExSOL, ActSOL, ExUSDC, ActUSDC, Buy");
+    println!("Price, Histogram, ROC, ExSOL, ActSOL, ExUSDC, ActUSDC, Buy");
 
     // GET /quote
     loop {
@@ -103,14 +105,16 @@ async fn macd(keypair: Keypair) {
                 let price = sell_amount as f64 * USDC_DECIMALS;
                 let next = macd.next(price);
                 let hist = next.histogram;
+                let roc = hist - last;
 
-                if logic::should_sell(hist, sol, SELL_AMOUNT_SOL, HIST_THRESHOLD) {
+
+                if sell_logic::should_sell(HIST_THRESHOLD, hist, roc, sol) {
                     buy_flag = "Sell";
-                    let sell = trade::swap(sell_response, &jupiter_swap_api_client, &rpc_client).await;
-                    if sell {
+                    //let sell = trade::swap(sell_response, &jupiter_swap_api_client, &rpc_client).await;
+                    //if sell {
                         usdc = usdc + price;
                         sol = sol - SELL_AMOUNT_SOL;
-                    }
+                    //}
                 }
 
                 let buy_request = QuoteRequest {
@@ -124,13 +128,13 @@ async fn macd(keypair: Keypair) {
                 match jupiter_swap_api_client.quote(&buy_request).await {
                     Ok(buy_response) => {
                         let buy_amount: u64 = buy_response.out_amount;
-                        if logic::should_buy(hist, usdc, price, HIST_THRESHOLD) {
+                        if buy_logic::should_buy(HIST_THRESHOLD, hist, roc, usdc, price) {
                             buy_flag = "Buy";
-                            let buy = trade::swap(buy_response, &jupiter_swap_api_client, &rpc_client).await;
-                            if buy {
+                            //let buy = trade::swap(buy_response, &jupiter_swap_api_client, &rpc_client).await;
+                            //if buy {
                                 usdc = usdc - price;
                                 sol = sol + buy_amount as f64 * NATIVE_DECIMALS;
-                            }
+                            //}
                         }
                         let act_usdc: f64 = get_token_account_balance(&rpc_client, USDC_MINT).await;
                         let act_sol: f64 = get_sol_balance(&rpc_client).await;
@@ -138,17 +142,19 @@ async fn macd(keypair: Keypair) {
                         let usdc_diff: f64 = act_usdc - usdc;
                         let sol_diff: f64 = act_sol - sol;
 
-                        println!("{price:.6}, {hist:.9}, {sol_diff:.9}, {usdc_diff:.6}, {sol:.9}, {usdc:.6}, {buy_flag}");
+                        println!("{price:.6}, {hist:.9}, {roc:.9}, {sol_diff:.9}, {usdc_diff:.6}, {sol:.9}, {usdc:.6}, {buy_flag}");
                     },
                     Err(_e) => {
                         thread::sleep(Duration::from_secs(2));
                     }
                 }
 
-                thread::sleep(Duration::from_secs(2));
+                last = hist;
+
+                thread::sleep(Duration::from_secs(10));
             },
             Err(_e) => {
-                thread::sleep(Duration::from_secs(2));
+                thread::sleep(Duration::from_secs(10));
             }
         }
     }
