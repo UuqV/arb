@@ -30,7 +30,7 @@ pub const TEST_WALLET: Pubkey = pubkey!("EVx7u3fzMPcNixmSNtriDCmpEZngHWH6LffhLzS
 pub const SELL_AMOUNT_LAMP: u64 = 100_000_000; // 1_000_000_000 = 1 SOL
 pub const SELL_AMOUNT_SOL: f64 = SELL_AMOUNT_LAMP as f64 * NATIVE_DECIMALS;
 
-pub const HIST_THRESHOLD: f64 = SELL_AMOUNT_SOL * 0.01;
+pub const HIST_THRESHOLD: f64 = SELL_AMOUNT_SOL * 0.1;
 
 #[tokio::main]
 async fn main() {
@@ -80,7 +80,7 @@ async fn macd(keypair: Keypair) {
         amount: SELL_AMOUNT_LAMP,
         input_mint: NATIVE_MINT,
         output_mint: USDC_MINT,
-        slippage_bps: 50,
+        slippage_bps: 100,
         ..QuoteRequest::default()
     };
 
@@ -106,11 +106,9 @@ async fn macd(keypair: Keypair) {
 
                 if logic::should_sell(hist, sol, SELL_AMOUNT_SOL, HIST_THRESHOLD) {
                     buy_flag = "Sell";
-                    let sell = trade::swap(sell_response, &jupiter_swap_api_client, &rpc_client).await;
-                    if sell {
-                        usdc = usdc + price;
-                        sol = sol - SELL_AMOUNT_SOL;
-                    }
+                    tokio::spawn(async move {
+                        trade::swap(sell_response, &jupiter_swap_api_client, &rpc_client).await;
+                    });
                 }
 
                 let buy_request = QuoteRequest {
@@ -123,22 +121,16 @@ async fn macd(keypair: Keypair) {
 
                 match jupiter_swap_api_client.quote(&buy_request).await {
                     Ok(buy_response) => {
-                        let buy_amount: u64 = buy_response.out_amount;
                         if logic::should_buy(hist, usdc, price, HIST_THRESHOLD) {
                             buy_flag = "Buy";
-                            let buy = trade::swap(buy_response, &jupiter_swap_api_client, &rpc_client).await;
-                            if buy {
-                                usdc = usdc - price;
-                                sol = sol + buy_amount as f64 * NATIVE_DECIMALS;
-                            }
+                            tokio::spawn(async move {
+                                trade::swap(buy_response, &jupiter_swap_api_client, &rpc_client).await;
+                            });
                         }
-                        let act_usdc: f64 = get_token_account_balance(&rpc_client, USDC_MINT).await;
-                        let act_sol: f64 = get_sol_balance(&rpc_client).await;
+                        usdc = get_token_account_balance(&rpc_client, USDC_MINT).await;
+                        sol = get_sol_balance(&rpc_client).await;
 
-                        let usdc_diff: f64 = act_usdc - usdc;
-                        let sol_diff: f64 = act_sol - sol;
-
-                        println!("{price:.6}, {hist:.9}, {sol_diff:.9}, {usdc_diff:.6}, {sol:.9}, {usdc:.6}, {buy_flag}");
+                        println!("{price:.6}, {hist:.9}, {sol:.9}, {usdc:.6}, {buy_flag}");
                     },
                     Err(_e) => {
                         thread::sleep(Duration::from_secs(2));
