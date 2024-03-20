@@ -93,14 +93,15 @@ async fn macd(keypair: Keypair) {
     println!("Sell amount: {SELL_AMOUNT_SOL:#?}");
     println!("Hist threshold: {HIST_THRESHOLD:#?}");
     println!("Algorithm: Solid Buy");
-    println!("Price, Histogram, ROC, ExSOL, ActSOL, ExUSDC, ActUSDC, Buy");
+    println!("Price, Histogram, ROC, ExSOL, ExUSDC, SOL, USDC, Buy, Sell");
 
     // GET /quote
     loop {
         match jupiter_swap_api_client.quote(&sell_request).await {
             Ok(sell_response) => {
 
-                let mut buy_flag: &str = "None";
+                let mut buy_flag: &str = "False";
+                let mut sell_flag: &str = "False";
                 let sell_amount: u64 = sell_response.out_amount;
                 let price = sell_amount as f64 * USDC_DECIMALS;
                 let next = macd.next(price);
@@ -109,12 +110,12 @@ async fn macd(keypair: Keypair) {
 
 
                 if sell_logic::should_sell(HIST_THRESHOLD, hist, roc, sol) {
-                    buy_flag = "Sell";
-                    //let sell = trade::swap(sell_response, &jupiter_swap_api_client, &rpc_client).await;
-                    //if sell {
+                    sell_flag = "True";
+                    let sell = trade::swap(sell_response, &jupiter_swap_api_client, &rpc_client).await;
+                    if sell {
                         usdc = usdc + price;
                         sol = sol - SELL_AMOUNT_SOL;
-                    //}
+                    }
                 }
 
                 let buy_request = QuoteRequest {
@@ -129,12 +130,12 @@ async fn macd(keypair: Keypair) {
                     Ok(buy_response) => {
                         let buy_amount: u64 = buy_response.out_amount;
                         if buy_logic::should_buy(HIST_THRESHOLD, hist, roc, usdc, price) {
-                            buy_flag = "Buy";
-                            //let buy = trade::swap(buy_response, &jupiter_swap_api_client, &rpc_client).await;
-                            //if buy {
+                            buy_flag = "True";
+                            let buy = trade::swap(buy_response, &jupiter_swap_api_client, &rpc_client).await;
+                            if buy {
                                 usdc = usdc - price;
                                 sol = sol + buy_amount as f64 * NATIVE_DECIMALS;
-                            //}
+                            }
                         }
                         let act_usdc: f64 = get_token_account_balance(&rpc_client, USDC_MINT).await;
                         let act_sol: f64 = get_sol_balance(&rpc_client).await;
@@ -142,7 +143,7 @@ async fn macd(keypair: Keypair) {
                         let usdc_diff: f64 = act_usdc - usdc;
                         let sol_diff: f64 = act_sol - sol;
 
-                        println!("{price:.6}, {hist:.9}, {roc:.9}, {sol_diff:.9}, {usdc_diff:.6}, {sol:.9}, {usdc:.6}, {buy_flag}");
+                        println!("{price:.6}, {hist:.9}, {roc:.9}, {sol_diff:.9}, {usdc_diff:.6}, {act_sol:.9}, {act_usdc:.6}, {buy_flag}, {sell_flag}");
                     },
                     Err(_e) => {
                         thread::sleep(Duration::from_secs(2));
