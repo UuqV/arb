@@ -100,8 +100,8 @@ async fn macd(keypair: Keypair) {
         match jupiter_swap_api_client.quote(&sell_request).await {
             Ok(sell_response) => {
 
-                let mut buy_flag: &str = "False";
-                let mut sell_flag: &str = "False";
+                let mut buy_flag: &str = "0";
+                let mut sell_flag: &str = "0";
                 let sell_amount: u64 = sell_response.out_amount;
                 let price = sell_amount as f64 * USDC_DECIMALS;
                 let next = macd.next(price);
@@ -110,7 +110,7 @@ async fn macd(keypair: Keypair) {
 
 
                 if sell_logic::should_sell(HIST_THRESHOLD, hist, roc, sol) {
-                    sell_flag = "True";
+                    sell_flag = "1";
                     let sell = trade::swap(sell_response, &jupiter_swap_api_client, &rpc_client).await;
                     if sell {
                         usdc = usdc + price;
@@ -130,7 +130,7 @@ async fn macd(keypair: Keypair) {
                     Ok(buy_response) => {
                         let buy_amount: u64 = buy_response.out_amount;
                         if buy_logic::should_buy(HIST_THRESHOLD, hist, roc, usdc, price) {
-                            buy_flag = "True";
+                            buy_flag = "1";
                             let buy = trade::swap(buy_response, &jupiter_swap_api_client, &rpc_client).await;
                             if buy {
                                 usdc = usdc - price;
