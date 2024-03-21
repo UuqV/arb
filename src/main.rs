@@ -121,12 +121,11 @@ async fn macd(keypair: Keypair) {
 
                 if sell_logic::should_sell(HIST_THRESHOLD, sell_hist, sell_roc, sol) {
                     sell_flag = "1";
-                    //let sell = trade::swap(sell_response, &jupiter_swap_api_client, &rpc_client).await;
-                    //if sell {
-                    thread::sleep(Duration::from_secs(10));
-                    usdc = usdc + sell_price;
-                    sol = sol - (SELL_AMOUNT_SOL * 0.99);
-                    //}
+                    let sell = trade::swap(sell_response, &jupiter_swap_api_client, &rpc_client).await;
+                    if sell {
+                        usdc = usdc + sell_price;
+                        sol = sol - (SELL_AMOUNT_SOL * 0.99);
+                    }
                 }
 
                 let buy_amount: u64 = buy_response.out_amount;
@@ -136,12 +135,11 @@ async fn macd(keypair: Keypair) {
 
                 if buy_logic::should_buy(HIST_THRESHOLD * 0.002, buy_hist, buy_roc, usdc, sell_price) {
                     buy_flag = "1";
-                    //let buy = trade::swap(buy_response, &jupiter_swap_api_client, &rpc_client).await;
-                    //if buy {
-                    thread::sleep(Duration::from_secs(10));
-                    usdc = usdc - (200.0 * 0.99);
-                    sol = sol + buy_price;
-                    //}
+                    let buy = trade::swap(buy_response, &jupiter_swap_api_client, &rpc_client).await;
+                    if buy {
+                        usdc = usdc - (200.0 * 0.99);
+                        sol = sol + buy_price;
+                    }
                 }
 
                 println!("----------------------------------------------------------------------------");
