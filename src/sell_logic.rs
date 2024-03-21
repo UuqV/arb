@@ -1,5 +1,5 @@
-pub fn should_sell(hist_threshold: f64, hist: f64, roc: f64, sol: f64) -> bool {
-    return check_hist_threshold(hist_threshold, hist) && check_sell_roc(roc) && check_sell_funding(sol);
+pub fn should_sell(hist_threshold: f64, hist: f64, roc: f64, last_roc: f64, sol: f64) -> bool {
+    return check_hist_threshold(hist_threshold, hist) && check_sell_roc(roc, last_roc) && check_sell_funding(sol);
 }
 
 pub fn check_hist_threshold(hist_threshold: f64, hist: f64) -> bool {
@@ -10,8 +10,8 @@ pub fn check_sell_funding(sol: f64) -> bool {
     return sol > 1.01;
 }
 
-pub fn check_sell_roc(roc: f64) -> bool {
-    return roc <= 0.0;
+pub fn check_sell_roc(roc: f64, last_roc: f64) -> bool {
+    return roc <= 0.0 && last_roc >= 0.0;
 }
 
 #[cfg(test)]
@@ -27,13 +27,15 @@ mod sell_tests {
 
     #[test]
     fn negative_sell_roc() { // Sells should happen when the ROC switches negative
-        assert_eq!(check_sell_roc(0.01), false);
-        assert_eq!(check_sell_roc(-0.01), true);
+        assert_eq!(check_sell_roc(0.01, 0.1), false);
+        assert_eq!(check_sell_roc(-0.01, 0.1), true);
+        assert_eq!(check_sell_roc(-0.01, -0.1), false);
+        assert_eq!(check_sell_roc(0.01, -0.1), false);
     }
 
     #[test]
     fn positive_hist_threshold() { // Sells should happen when histogram value is above a certain threshold
-        assert_eq!(check_hist_threshold(0.01, -0.01), false);
+        assert_eq!(check_hist_threshold(0.01, 0.01), false);
         assert_eq!(check_hist_threshold(0.01, -0.1), false);
         assert_eq!(check_hist_threshold(0.1, 0.05), false);
         assert_eq!(check_hist_threshold(0.01, 0.05), true);

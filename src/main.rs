@@ -73,9 +73,11 @@ async fn macd(keypair: Keypair) {
 
     let mut sell_macd = Macd::new(12, 26, 9).unwrap();
     let mut sol_last: f64 = 0.0;
+    let mut sell_last_roc: f64 = 0.0;
 
     let mut buy_macd = Macd::new(12, 26, 9).unwrap();
     let mut usdc_last: f64 = 0.0;
+    let mut buy_last_roc: f64 = 0.0;
 
     let rpc_client = RpcClient::new("https://api.mainnet-beta.solana.com".into());
         
@@ -117,9 +119,10 @@ async fn macd(keypair: Keypair) {
                 let sell_price = sell_amount as f64 * USDC_DECIMALS * 0.995;
                 let sell_hist = sell_macd.next(sell_price).histogram;
                 let sell_roc = sell_hist - sol_last;
+                let sell_2deriv = sell_last_roc;
 
 
-                if sell_logic::should_sell(HIST_THRESHOLD, sell_hist, sell_roc, sol) {
+                if sell_logic::should_sell(HIST_THRESHOLD, sell_hist, sell_roc, sell_2deriv, sol) {
                     sell_flag = "1";
                     let sell = trade::swap(sell_response, &jupiter_swap_api_client, &rpc_client).await;
                     if sell {
@@ -132,8 +135,9 @@ async fn macd(keypair: Keypair) {
                 let buy_price = buy_amount as f64 * NATIVE_DECIMALS * 0.995;
                 let buy_hist = buy_macd.next(buy_price).histogram;
                 let buy_roc = buy_hist - usdc_last;
+                let buy_2deriv = buy_roc - buy_last_roc;
 
-                if buy_logic::should_buy(HIST_THRESHOLD * 0.002, buy_hist, buy_roc, usdc, sell_price) {
+                if buy_logic::should_buy(HIST_THRESHOLD * 0.002, buy_hist, buy_roc, buy_2deriv, usdc, sell_price) {
                     buy_flag = "1";
                     let buy = trade::swap(buy_response, &jupiter_swap_api_client, &rpc_client).await;
                     if buy {
@@ -152,6 +156,8 @@ async fn macd(keypair: Keypair) {
 
                 sol_last = sell_hist;
                 usdc_last = buy_hist;
+                sell_last_roc = sell_roc;
+                buy_last_roc = buy_roc;
 
                 thread::sleep(Duration::from_secs(30));
             },
