@@ -31,7 +31,7 @@ pub const TEST_WALLET: Pubkey = pubkey!("EVx7u3fzMPcNixmSNtriDCmpEZngHWH6LffhLzS
 pub const SELL_AMOUNT_LAMP: u64 = 1_000_000_000; // 1_000_000_000 = 1 SOL
 pub const SELL_AMOUNT_SOL: f64 = SELL_AMOUNT_LAMP as f64 * NATIVE_DECIMALS;
 
-pub const HIST_THRESHOLD: f64 = SELL_AMOUNT_SOL * 0.05;
+pub const HIST_THRESHOLD: f64 = SELL_AMOUNT_SOL * 0.1;
 
 #[tokio::main]
 async fn main() {
