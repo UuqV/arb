@@ -96,8 +96,8 @@ async fn macd(keypair: Keypair) {
     };
 
 
-    let initial_funding: f64 = 1000.0;
-    let mut sol : f64 = 5.0;
+    let initial_funding: f64 = get_token_account_balance(&rpc_client, USDC_MINT).await;
+    let mut sol : f64 = get_sol_balance(&rpc_client).await;
     let mut usdc : f64 = initial_funding;
     println!("Initial funding: {initial_funding:#?}");
     println!("Sell amount: {SELL_AMOUNT_SOL:#?}");
@@ -142,9 +142,13 @@ async fn macd(keypair: Keypair) {
                     }
                 }
 
+
+                let act_usdc: f64 = get_token_account_balance(&rpc_client, USDC_MINT).await;
+                let act_sol: f64 = get_sol_balance(&rpc_client).await;
+
                 println!("----------------------------------------------------------------------------");
-                println!("SELL SOL: {sell_price:.6}, {sell_hist:.9}, {sell_roc:.9}, {sol:.9}, {sell_flag}");
-                println!("BUY  SOL: {buy_price:.9}, {buy_hist:.9}, {buy_roc:.9}, {usdc:.6}, {buy_flag}");
+                println!("SELL SOL: {sell_price:.6}, {sell_hist:.9}, {sell_roc:.9}, {sol:.9}, {act_sol:.9}, {sell_flag}");
+                println!("BUY  SOL: {buy_price:.9}, {buy_hist:.9}, {buy_roc:.9}, {usdc:.6}, {act_usdc:.6}, {buy_flag}");
 
                 sol_last = sell_hist;
                 usdc_last = buy_hist;
