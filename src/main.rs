@@ -13,8 +13,7 @@ use std::time::Duration;
 use solana_sdk::{signature::read_keypair_file, signature::Keypair};
 use solana_client::nonblocking::rpc_client::RpcClient;
 use spl_associated_token_account::get_associated_token_address;
-use std::str::FromStr;
-use tokio;
+use tokio::{self, try_join};
 
 mod buy_logic;
 mod sell_logic;
@@ -69,11 +68,14 @@ async fn get_sol_balance(rpc_client: &RpcClient) -> f64 {
 
 async fn macd(keypair: Keypair) {
     let api_base_url = env::var("API_BASE_URL").unwrap_or("https://quote-api.jup.ag/v6".into());
-    println!("Using base url: {}", api_base_url);
 
     let jupiter_swap_api_client = JupiterSwapApiClient::new(api_base_url);
 
-    let mut macd = Macd::new(12, 26, 9).unwrap();
+    let mut sol_macd = Macd::new(12, 26, 9).unwrap();
+    let mut sol_last: f64 = 0.0;
+
+    let mut usdc_macd = Macd::new(12, 26, 9).unwrap();
+    let mut usdc_last: f64 = 0.0;
 
     let rpc_client = RpcClient::new("https://api.mainnet-beta.solana.com".into());
         
@@ -81,14 +83,22 @@ async fn macd(keypair: Keypair) {
         amount: SELL_AMOUNT_LAMP,
         input_mint: NATIVE_MINT,
         output_mint: USDC_MINT,
-        slippage_bps: 100,
+        slippage_bps: 50,
         ..QuoteRequest::default()
     };
 
-    let initial_funding: f64 = get_token_account_balance(&rpc_client, USDC_MINT).await;
-    let mut sol : f64 = get_sol_balance(&rpc_client).await;
+    let buy_request = QuoteRequest {
+        amount: 200000000,
+        input_mint: USDC_MINT,
+        output_mint: NATIVE_MINT,
+        slippage_bps: 50,
+        ..QuoteRequest::default()
+    };
+
+
+    let initial_funding: f64 = 1000.0;
+    let mut sol : f64 = 5.0;
     let mut usdc : f64 = initial_funding;
-    let mut last: f64 = 0.0;
     println!("Initial funding: {initial_funding:#?}");
     println!("Sell amount: {SELL_AMOUNT_SOL:#?}");
     println!("Hist threshold: {HIST_THRESHOLD:#?}");
@@ -97,60 +107,47 @@ async fn macd(keypair: Keypair) {
 
     // GET /quote
     loop {
-        match jupiter_swap_api_client.quote(&sell_request).await {
-            Ok(sell_response) => {
+        match try_join!(jupiter_swap_api_client.quote(&sell_request), jupiter_swap_api_client.quote(&buy_request)) {
+            Ok((sell_response, buy_response)) => {
 
                 let mut buy_flag: &str = "0";
                 let mut sell_flag: &str = "0";
+
                 let sell_amount: u64 = sell_response.out_amount;
-                let price = sell_amount as f64 * USDC_DECIMALS;
-                let next = macd.next(price);
-                let hist = next.histogram;
-                let roc = hist - last;
+                let usdc_price = sell_amount as f64 * USDC_DECIMALS;
+                let sol_hist = sol_macd.next(usdc_price).histogram;
+                let sol_roc = sol_hist - sol_last;
 
 
-                if sell_logic::should_sell(HIST_THRESHOLD, hist, roc, sol) {
+                if sell_logic::should_sell(HIST_THRESHOLD, sol_hist, sol_roc, sol) {
                     sell_flag = "1";
-                    let sell = trade::swap(sell_response, &jupiter_swap_api_client, &rpc_client).await;
-                    if sell {
-                        usdc = usdc + price;
+                    //let sell = trade::swap(sell_response, &jupiter_swap_api_client, &rpc_client).await;
+                    //if sell {
+                        usdc = usdc + usdc_price;
                         sol = sol - SELL_AMOUNT_SOL;
-                    }
+                    //}
                 }
 
-                let buy_request = QuoteRequest {
-                    amount: sell_amount,
-                    input_mint: USDC_MINT,
-                    output_mint: NATIVE_MINT,
-                    slippage_bps: 100,
-                    ..QuoteRequest::default()
-                };
+                let buy_amount: u64 = buy_response.out_amount;
+                let sol_price = buy_amount as f64 * NATIVE_DECIMALS;
+                let usdc_hist = usdc_macd.next(sol_price).histogram;
+                let usdc_roc = usdc_hist - usdc_last;
 
-                match jupiter_swap_api_client.quote(&buy_request).await {
-                    Ok(buy_response) => {
-                        let buy_amount: u64 = buy_response.out_amount;
-                        if buy_logic::should_buy(HIST_THRESHOLD, hist, roc, usdc, price) {
-                            buy_flag = "1";
-                            let buy = trade::swap(buy_response, &jupiter_swap_api_client, &rpc_client).await;
-                            if buy {
-                                usdc = usdc - price;
-                                sol = sol + buy_amount as f64 * NATIVE_DECIMALS;
-                            }
-                        }
-                        let act_usdc: f64 = get_token_account_balance(&rpc_client, USDC_MINT).await;
-                        let act_sol: f64 = get_sol_balance(&rpc_client).await;
-
-                        let usdc_diff: f64 = act_usdc - usdc;
-                        let sol_diff: f64 = act_sol - sol;
-
-                        println!("{price:.6}, {hist:.9}, {roc:.9}, {sol_diff:.9}, {usdc_diff:.6}, {act_sol:.9}, {act_usdc:.6}, {buy_flag}, {sell_flag}");
-                    },
-                    Err(_e) => {
-                        thread::sleep(Duration::from_secs(2));
-                    }
+                if buy_logic::should_buy(HIST_THRESHOLD * 0.0002, usdc_hist, usdc_roc, usdc, usdc_price) {
+                    buy_flag = "1";
+                    //let buy = trade::swap(buy_response, &jupiter_swap_api_client, &rpc_client).await;
+                    //if buy {
+                        usdc = usdc - 200.0;
+                        sol = sol + sol_price;
+                    //}
                 }
 
-                last = hist;
+                println!("----------------------------------------------------------------------------");
+                println!("SELL SOL: {usdc_price:.6}, {sol_hist:.9}, {sol_roc:.9}, {sol:.9}, {buy_flag}");
+                println!("BUY  SOL: {sol_price:.9}, {usdc_hist:.9}, {usdc_roc:.9}, {usdc:.6}, {sell_flag}");
+
+                sol_last = sol_hist;
+                usdc_last = usdc_hist;
 
                 thread::sleep(Duration::from_secs(10));
             },

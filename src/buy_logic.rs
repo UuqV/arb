@@ -3,7 +3,7 @@ pub fn should_buy( hist_threshold: f64, hist: f64, roc: f64, usdc: f64, price: f
 }
 
 pub fn check_hist_threshold(hist_threshold: f64, hist: f64, ) -> bool {
-    return hist < -hist_threshold;
+    return hist > hist_threshold;
 }
 
 pub fn check_buy_funding(usdc: f64, price: f64) -> bool {
@@ -11,7 +11,7 @@ pub fn check_buy_funding(usdc: f64, price: f64) -> bool {
 }
 
 pub fn check_buy_roc(roc: f64) -> bool {
-    return roc >= 0.0;
+    return roc <= 0.0;
 }
 
 #[cfg(test)]
