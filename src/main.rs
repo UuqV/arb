@@ -152,7 +152,7 @@ async fn macd(keypair: Keypair) {
 
                 last = hist;
 
-                thread::sleep(Duration::from_secs(10));
+                thread::sleep(Duration::from_secs(30));
             },
             Err(_e) => {
                 thread::sleep(Duration::from_secs(10));
