@@ -71,10 +71,10 @@ async fn macd(keypair: Keypair) {
 
     let jupiter_swap_api_client = JupiterSwapApiClient::new(api_base_url);
 
-    let mut sol_macd = Macd::new(12, 26, 9).unwrap();
+    let mut sell_macd = Macd::new(12, 26, 9).unwrap();
     let mut sol_last: f64 = 0.0;
 
-    let mut usdc_macd = Macd::new(12, 26, 9).unwrap();
+    let mut buy_macd = Macd::new(12, 26, 9).unwrap();
     let mut usdc_last: f64 = 0.0;
 
     let rpc_client = RpcClient::new("https://api.mainnet-beta.solana.com".into());
@@ -114,42 +114,42 @@ async fn macd(keypair: Keypair) {
                 let mut sell_flag: &str = "0";
 
                 let sell_amount: u64 = sell_response.out_amount;
-                let usdc_price = sell_amount as f64 * USDC_DECIMALS;
-                let sol_hist = sol_macd.next(usdc_price).histogram;
-                let sol_roc = sol_hist - sol_last;
+                let sell_price = sell_amount as f64 * USDC_DECIMALS;
+                let sell_hist = sell_macd.next(sell_price).histogram;
+                let sell_roc = sell_hist - sol_last;
 
 
-                if sell_logic::should_sell(HIST_THRESHOLD, sol_hist, sol_roc, sol) {
+                if sell_logic::should_sell(HIST_THRESHOLD, sell_hist, sell_roc, sol) {
                     sell_flag = "1";
                     //let sell = trade::swap(sell_response, &jupiter_swap_api_client, &rpc_client).await;
                     //if sell {
                     thread::sleep(Duration::from_secs(10));
-                    usdc = usdc + usdc_price;
+                    usdc = usdc + sell_price;
                     sol = sol - (SELL_AMOUNT_SOL * 0.99);
                     //}
                 }
 
                 let buy_amount: u64 = buy_response.out_amount;
-                let sol_price = buy_amount as f64 * NATIVE_DECIMALS;
-                let usdc_hist = usdc_macd.next(sol_price).histogram;
-                let usdc_roc = usdc_hist - usdc_last;
+                let buy_price = buy_amount as f64 * NATIVE_DECIMALS;
+                let buy_hist = buy_macd.next(buy_price).histogram;
+                let buy_roc = buy_hist - usdc_last;
 
-                if buy_logic::should_buy(HIST_THRESHOLD * 0.002, usdc_hist, usdc_roc, usdc, usdc_price) {
+                if buy_logic::should_buy(HIST_THRESHOLD * 0.002, buy_hist, buy_roc, usdc, sell_price) {
                     buy_flag = "1";
                     //let buy = trade::swap(buy_response, &jupiter_swap_api_client, &rpc_client).await;
                     //if buy {
                     thread::sleep(Duration::from_secs(10));
                     usdc = usdc - (200.0 * 0.99);
-                    sol = sol + sol_price;
+                    sol = sol + buy_price;
                     //}
                 }
 
                 println!("----------------------------------------------------------------------------");
-                println!("SELL SOL: {usdc_price:.6}, {sol_hist:.9}, {sol_roc:.9}, {sol:.9}, {buy_flag}");
-                println!("BUY  SOL: {sol_price:.9}, {usdc_hist:.9}, {usdc_roc:.9}, {usdc:.6}, {sell_flag}");
+                println!("SELL SOL: {sell_price:.6}, {sell_hist:.9}, {sell_roc:.9}, {sol:.9}, {sell_flag}");
+                println!("BUY  SOL: {buy_price:.9}, {buy_hist:.9}, {buy_roc:.9}, {usdc:.6}, {buy_flag}");
 
-                sol_last = sol_hist;
-                usdc_last = usdc_hist;
+                sol_last = sell_hist;
+                usdc_last = buy_hist;
 
                 thread::sleep(Duration::from_secs(30));
             },
