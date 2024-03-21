@@ -125,7 +125,7 @@ async fn macd(keypair: Keypair) {
                     //if sell {
                     thread::sleep(Duration::from_secs(10));
                     usdc = usdc + usdc_price;
-                    sol = sol - SELL_AMOUNT_SOL;
+                    sol = sol - (SELL_AMOUNT_SOL * 0.99);
                     //}
                 }
 
@@ -139,7 +139,7 @@ async fn macd(keypair: Keypair) {
                     //let buy = trade::swap(buy_response, &jupiter_swap_api_client, &rpc_client).await;
                     //if buy {
                     thread::sleep(Duration::from_secs(10));
-                    usdc = usdc - 200.0;
+                    usdc = usdc - (200.0 * 0.99);
                     sol = sol + sol_price;
                     //}
                 }
