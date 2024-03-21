@@ -30,7 +30,7 @@ pub const TEST_WALLET: Pubkey = pubkey!("EVx7u3fzMPcNixmSNtriDCmpEZngHWH6LffhLzS
 pub const SELL_AMOUNT_LAMP: u64 = 1_000_000_000; // 1_000_000_000 = 1 SOL
 pub const SELL_AMOUNT_SOL: f64 = SELL_AMOUNT_LAMP as f64 * NATIVE_DECIMALS;
 
-pub const HIST_THRESHOLD: f64 = SELL_AMOUNT_SOL * 0.05;
+pub const HIST_THRESHOLD: f64 = SELL_AMOUNT_SOL * 0.1;
 
 #[tokio::main]
 async fn main() {
@@ -83,7 +83,7 @@ async fn macd(keypair: Keypair) {
         amount: SELL_AMOUNT_LAMP,
         input_mint: NATIVE_MINT,
         output_mint: USDC_MINT,
-        slippage_bps: 50,
+        slippage_bps: 100,
         ..QuoteRequest::default()
     };
 
@@ -91,7 +91,7 @@ async fn macd(keypair: Keypair) {
         amount: 200000000,
         input_mint: USDC_MINT,
         output_mint: NATIVE_MINT,
-        slippage_bps: 50,
+        slippage_bps: 100,
         ..QuoteRequest::default()
     };
 
@@ -114,7 +114,7 @@ async fn macd(keypair: Keypair) {
                 let mut sell_flag: &str = "0";
 
                 let sell_amount: u64 = sell_response.out_amount;
-                let sell_price = sell_amount as f64 * USDC_DECIMALS;
+                let sell_price = sell_amount as f64 * USDC_DECIMALS * 0.995;
                 let sell_hist = sell_macd.next(sell_price).histogram;
                 let sell_roc = sell_hist - sol_last;
 
@@ -124,12 +124,12 @@ async fn macd(keypair: Keypair) {
                     let sell = trade::swap(sell_response, &jupiter_swap_api_client, &rpc_client).await;
                     if sell {
                         usdc = usdc + sell_price;
-                        sol = sol - (SELL_AMOUNT_SOL * 0.99);
+                        sol = sol - SELL_AMOUNT_SOL;
                     }
                 }
 
                 let buy_amount: u64 = buy_response.out_amount;
-                let buy_price = buy_amount as f64 * NATIVE_DECIMALS;
+                let buy_price = buy_amount as f64 * NATIVE_DECIMALS * 0.995;
                 let buy_hist = buy_macd.next(buy_price).histogram;
                 let buy_roc = buy_hist - usdc_last;
 
@@ -137,7 +137,7 @@ async fn macd(keypair: Keypair) {
                     buy_flag = "1";
                     let buy = trade::swap(buy_response, &jupiter_swap_api_client, &rpc_client).await;
                     if buy {
-                        usdc = usdc - (200.0 * 0.99);
+                        usdc = usdc - 200.0;
                         sol = sol + buy_price;
                     }
                 }
