@@ -123,8 +123,9 @@ async fn macd(keypair: Keypair) {
                     sell_flag = "1";
                     //let sell = trade::swap(sell_response, &jupiter_swap_api_client, &rpc_client).await;
                     //if sell {
-                        usdc = usdc + usdc_price;
-                        sol = sol - SELL_AMOUNT_SOL;
+                    thread::sleep(Duration::from_secs(10));
+                    usdc = usdc + usdc_price;
+                    sol = sol - SELL_AMOUNT_SOL;
                     //}
                 }
 
@@ -137,8 +138,9 @@ async fn macd(keypair: Keypair) {
                     buy_flag = "1";
                     //let buy = trade::swap(buy_response, &jupiter_swap_api_client, &rpc_client).await;
                     //if buy {
-                        usdc = usdc - 200.0;
-                        sol = sol + sol_price;
+                    thread::sleep(Duration::from_secs(10));
+                    usdc = usdc - 200.0;
+                    sol = sol + sol_price;
                     //}
                 }
 
