@@ -43,31 +43,26 @@ pub async fn swap(quote_response: QuoteResponse, jupiter_swap_api_client: &Jupit
                                                 return true;
                                             }
                                             Err(_e) => {
-                                                println!("{_e}");
                                                 return false;
                                             }
                                         };
                                     }
                                     Err(e) => {
-                                        println!("Signer error");
                                         return false;
                                     }
                                 };
                             },
                             Err(e) => {
-                                println!("Pubkey error");
                                 return false;
                             }
                         };
                     },
                     Err(_e) => {
-                        println!("Var error");
                         return false;
                     },
                 }
             },
             Err(_e) => {
-                println!("Error: {_e:#?}");
                 return false;
             }
         }
