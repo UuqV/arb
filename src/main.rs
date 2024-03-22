@@ -105,7 +105,7 @@ async fn macd(keypair: Keypair) {
     println!("Sell amount: {SELL_AMOUNT_SOL:#?}");
     println!("Hist threshold: {HIST_THRESHOLD:#?}");
     println!("Algorithm: Solid Buy");
-    println!("Buy Price, Buy Histogram, Buy ROC, USDC, ACT_USDC, Buy, Sell Price, Sell Histogram, Sell ROC, SOL, ACT_SOL, Buy/Sell, Total");
+    println!("Buy Price, Buy Histogram, Buy ROC, USDC, ACT_USDC, Sell Price, Sell Histogram, Sell ROC, SOL, ACT_SOL, Buy/Sell, Total");
 
     // GET /quote
     loop {
