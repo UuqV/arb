@@ -131,7 +131,7 @@ async fn macd(keypair: Keypair) {
                 let buy_price = buy_amount as f64 * NATIVE_DECIMALS * 0.995;
                 let buy_hist = buy_macd.next(buy_price).histogram;
 
-                if buy_logic::should_buy(HIST_THRESHOLD * 0.002, buy_hist, usdc, sell_price) {
+                if buy_logic::should_buy(HIST_THRESHOLD * 0.0025, buy_hist, usdc, sell_price) {
                     buy_sell_flag = "BUY";
                     let buy = trade::swap(buy_response, &jupiter_swap_api_client, &rpc_client).await;
                     if buy {
