@@ -106,7 +106,7 @@ async fn macd(keypair: Keypair) {
     println!("Sell amount: {SELL_AMOUNT_SOL:#?}");
     println!("Hist threshold: {HIST_THRESHOLD:#?}");
     println!("Algorithm: Solid Buy");
-    println!("Buy Price, Buy Histogram, Buy RSI, USDC, ACT_USDC, Sell Price, Sell Histogram, Sell RSI, SOL, ACT_SOL, Buy/Sell, Total");
+    println!("Buy Price, Buy Histogram, Buy RSI, USDC, Sell Price, Sell Histogram, Sell RSI, SOL, Buy/Sell, Total");
 
     // GET /quote
     loop {
@@ -123,15 +123,14 @@ async fn macd(keypair: Keypair) {
 
                 if sell_logic::should_sell(HIST_THRESHOLD, sell_hist, current_sell_rsi, sol) {
                     buy_sell_flag = "SELL";
-                    //let sell = trade::swap(sell_response, &jupiter_swap_api_client, &rpc_client).await;
-                    //if sell {
+                    let sell = trade::swap(sell_response, &jupiter_swap_api_client, &rpc_client).await;
+                    if sell {
                         usdc = usdc + sell_price;
                         sol = sol - SELL_AMOUNT_SOL;
-                        thread::sleep(Duration::from_secs(20));
-                    //}
-                    //else {
-                    //    buy_sell_flag = "ERROR";
-                    //}
+                    }
+                    else {
+                        buy_sell_flag = "ERROR";
+                    }
                 }
 
                 let buy_amount: u64 = buy_response.out_amount;
@@ -141,23 +140,20 @@ async fn macd(keypair: Keypair) {
 
                 if buy_logic::should_buy(HIST_THRESHOLD * 0.0025, buy_hist, current_buy_rsi, usdc, sell_price) {
                     buy_sell_flag = "BUY";
-                    //let buy = trade::swap(buy_response, &jupiter_swap_api_client, &rpc_client).await;
-                    //if buy {
+                    let buy = trade::swap(buy_response, &jupiter_swap_api_client, &rpc_client).await;
+                    if buy {
                         usdc = usdc - 200.0;
                         sol = sol + buy_price;
-                        thread::sleep(Duration::from_secs(20));
-                    //}
-                    //else {
-                    //    buy_sell_flag = "ERROR";
-                    //}
+                    }
+                    else {
+                        buy_sell_flag = "ERROR";
+                    }
                 }
-
-
                 let act_usdc: f64 = get_token_account_balance(&rpc_client, USDC_MINT).await;
                 let act_sol: f64 = get_sol_balance(&rpc_client).await;
                 let total: f64 = act_usdc + (act_sol * sell_price);
 
-                println!("{buy_price:.9}, {buy_hist:.9}, {current_buy_rsi:.9}, {usdc:.6}, {act_usdc:.6}, {sell_price:.6}, {sell_hist:.9}, {current_sell_rsi:.9}, {sol:.9}, {act_sol:.9}, {buy_sell_flag}, {total}");
+                println!("{buy_price:.9}, {buy_hist:.9}, {current_buy_rsi:.9}, {act_usdc:.6},  {sell_price:.6}, {sell_hist:.9}, {current_sell_rsi:.9}, {act_sol:.9}, {buy_sell_flag}, {total}");
 
                 thread::sleep(Duration::from_secs(20));
             },
