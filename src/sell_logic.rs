@@ -1,5 +1,9 @@
-pub fn should_sell(hist_threshold: f64, hist: f64, roc: f64, last_roc: f64, sol: f64) -> bool {
-    return check_hist_threshold(hist_threshold, hist) && check_sell_roc(roc, last_roc) && check_sell_funding(sol);
+pub fn should_sell(rsi: f64, sol: f64) -> bool {
+    return check_rsi(rsi) && check_sell_funding(sol);
+}
+
+pub fn check_rsi(rsi: f64) -> bool {
+    return rsi >= 70.0;
 }
 
 pub fn check_hist_threshold(hist_threshold: f64, hist: f64) -> bool {

@@ -125,7 +125,7 @@ async fn macd(keypair: Keypair) {
                 let current_sell_rsi = sell_rsi.next(sell_price);
 
 
-                if current_sell_rsi >= 69.0 {
+                if sell_logic::should_sell(current_sell_rsi, sol) {
                     buy_sell_flag = "SELL";
                     //let sell = trade::swap(sell_response, &jupiter_swap_api_client, &rpc_client).await;
                     //if sell {
@@ -143,9 +143,9 @@ async fn macd(keypair: Keypair) {
                 let buy_hist = buy_macd.next(buy_price).histogram;
                 let buy_roc = buy_hist - usdc_last;
                 let buy_2deriv = buy_roc - buy_last_roc;
-                let current_buy_rsi = sell_rsi.next(buy_price);
+                let current_buy_rsi = buy_rsi.next(buy_price);
 
-                if current_buy_rsi >= 69.0 {
+                if buy_logic::should_buy(current_buy_rsi, usdc) {
                     buy_sell_flag = "BUY";
                     //let buy = trade::swap(buy_response, &jupiter_swap_api_client, &rpc_client).await;
                     //if buy {
@@ -168,7 +168,7 @@ async fn macd(keypair: Keypair) {
                 sell_last_roc = sell_roc;
                 buy_last_roc = buy_roc;
 
-                thread::sleep(Duration::from_secs(20));
+                thread::sleep(Duration::from_secs(60));
             },
             Err(_e) => {
                 thread::sleep(Duration::from_secs(10));
