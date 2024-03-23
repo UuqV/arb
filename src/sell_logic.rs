@@ -11,7 +11,7 @@ pub fn check_sell_funding(sol: f64) -> bool {
 }
 
 pub fn check_sell_roc(roc: f64) -> bool {
-    return roc.abs() < 0.001;
+    return roc.abs() < 0.01;
 }
 
 #[cfg(test)]

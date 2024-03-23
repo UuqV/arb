@@ -11,7 +11,7 @@ pub fn check_buy_funding(usdc: f64, price: f64) -> bool {
 }
 
 pub fn check_buy_roc(roc: f64) -> bool {
-    return roc.abs() < 0.001;
+    return roc.abs() < 0.01;
 }
 
 #[cfg(test)]
@@ -28,7 +28,7 @@ mod buy_tests {
     #[test]
     fn negative_buy_roc() { // Buys should happen when the ROC is sufficiently low
         assert_eq!(check_buy_roc(0.01), false);
-        assert_eq!(check_buy_roc(-0.01), false);
+        assert_eq!(check_buy_roc(-0.1), false);
         assert_eq!(check_buy_roc(0.01), false);
         assert_eq!(check_buy_roc(-0.0009), true);
         assert_eq!(check_buy_roc(0.001), true);
