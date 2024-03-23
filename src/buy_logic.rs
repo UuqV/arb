@@ -1,5 +1,10 @@
-pub fn should_buy( hist_threshold: f64, hist: f64, usdc: f64, price: f64,) -> bool {
-    return check_hist_threshold(hist_threshold, hist) && check_buy_funding(usdc, price);
+pub fn should_buy( hist_threshold: f64, hist: f64, rsi: f64, usdc: f64, price: f64,) -> bool {
+    return check_hist_threshold(hist_threshold, hist) && check_rsi(rsi) && check_buy_funding(usdc, price);
+}
+
+
+pub fn check_rsi(rsi: f64) -> bool {
+    return rsi >= 70.0;
 }
 
 pub fn check_hist_threshold(hist_threshold: f64, hist: f64, ) -> bool {
