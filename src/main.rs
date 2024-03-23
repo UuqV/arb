@@ -72,10 +72,8 @@ async fn macd(keypair: Keypair) {
     let jupiter_swap_api_client = JupiterSwapApiClient::new(api_base_url);
 
     let mut sell_macd = Macd::new(12, 26, 9).unwrap();
-    let mut sol_last: f64 = 0.0;
 
     let mut buy_macd = Macd::new(12, 26, 9).unwrap();
-    let mut usdc_last: f64 = 0.0;
 
     let rpc_client = RpcClient::new("https://api.mainnet-beta.solana.com".into());
         
@@ -115,10 +113,9 @@ async fn macd(keypair: Keypair) {
                 let sell_amount: u64 = sell_response.out_amount;
                 let sell_price = sell_amount as f64 * USDC_DECIMALS * 0.995;
                 let sell_hist = sell_macd.next(sell_price).histogram;
-                let sell_roc = sell_hist - sol_last;
 
 
-                if sell_logic::should_sell(HIST_THRESHOLD, sell_hist, sell_roc, sol) {
+                if sell_logic::should_sell(HIST_THRESHOLD, sell_hist, sol) {
                     buy_sell_flag = "SELL";
                     let sell = trade::swap(sell_response, &jupiter_swap_api_client, &rpc_client).await;
                     if sell {
@@ -133,9 +130,8 @@ async fn macd(keypair: Keypair) {
                 let buy_amount: u64 = buy_response.out_amount;
                 let buy_price = buy_amount as f64 * NATIVE_DECIMALS * 0.995;
                 let buy_hist = buy_macd.next(buy_price).histogram;
-                let buy_roc = buy_hist - usdc_last;
 
-                if buy_logic::should_buy(HIST_THRESHOLD * 0.005, buy_hist, buy_roc, usdc, sell_price) {
+                if buy_logic::should_buy(HIST_THRESHOLD * 0.005, buy_hist, usdc, sell_price) {
                     buy_sell_flag = "BUY";
                     let buy = trade::swap(buy_response, &jupiter_swap_api_client, &rpc_client).await;
                     if buy {
@@ -152,10 +148,7 @@ async fn macd(keypair: Keypair) {
                 let act_sol: f64 = get_sol_balance(&rpc_client).await;
                 let total: f64 = act_usdc + (act_sol * sell_price);
 
-                println!("{buy_price:.9}, {buy_hist:.9}, {buy_roc:.9}, {usdc:.6}, {act_usdc:.6}, {sell_price:.6}, {sell_hist:.9}, {sell_roc:.9}, {sol:.9}, {act_sol:.9}, {buy_sell_flag}, {total}");
-
-                sol_last = sell_hist;
-                usdc_last = buy_hist;
+                println!("{buy_price:.9}, {buy_hist:.9}, {usdc:.6}, {act_usdc:.6}, {sell_price:.6}, {sell_hist:.9}, {sol:.9}, {act_sol:.9}, {buy_sell_flag}, {total}");
 
                 thread::sleep(Duration::from_secs(20));
             },
