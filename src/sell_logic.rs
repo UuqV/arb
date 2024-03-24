@@ -3,7 +3,7 @@ pub fn should_sell(rsi: f64, sol: f64) -> bool {
 }
 
 pub fn check_rsi(rsi: f64) -> bool {
-    return rsi >= 70.0;
+    return rsi >= 69.0;
 }
 
 pub fn check_hist_threshold(hist_threshold: f64, hist: f64) -> bool {
@@ -11,7 +11,7 @@ pub fn check_hist_threshold(hist_threshold: f64, hist: f64) -> bool {
 }
 
 pub fn check_sell_funding(sol: f64) -> bool {
-    return sol > 1.01;
+    return sol > 0.51;
 }
 
 pub fn check_sell_roc(roc: f64, last_roc: f64) -> bool {

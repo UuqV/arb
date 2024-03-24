@@ -1,4 +1,4 @@
-use std::env;
+use std::{env, time::SystemTime};
 
 use jupiter_swap_api_client::{
     quote::QuoteRequest,
@@ -15,6 +15,7 @@ use solana_sdk::{signature::read_keypair_file, signature::Keypair};
 use solana_client::nonblocking::rpc_client::RpcClient;
 use spl_associated_token_account::get_associated_token_address;
 use tokio::{self, try_join};
+use chrono;
 
 mod buy_logic;
 mod sell_logic;
@@ -28,7 +29,7 @@ const NATIVE_DECIMALS: f64 = 0.000000001;
 
 pub const TEST_WALLET: Pubkey = pubkey!("EVx7u3fzMPcNixmSNtriDCmpEZngHWH6LffhLzSeitCx");
 
-pub const SELL_AMOUNT_LAMP: u64 = 1_000_000_000; // 1_000_000_000 = 1 SOL
+pub const SELL_AMOUNT_LAMP: u64 = 500_000_000; // 1_000_000_000 = 1 SOL
 pub const SELL_AMOUNT_SOL: f64 = SELL_AMOUNT_LAMP as f64 * NATIVE_DECIMALS;
 
 pub const HIST_THRESHOLD: f64 = SELL_AMOUNT_SOL * 0.1;
@@ -93,7 +94,7 @@ async fn macd(keypair: Keypair) {
     };
 
     let buy_request = QuoteRequest {
-        amount: 200000000,
+        amount: 100000000,
         input_mint: USDC_MINT,
         output_mint: NATIVE_MINT,
         slippage_bps: 100,
@@ -149,7 +150,7 @@ async fn macd(keypair: Keypair) {
                     buy_sell_flag = "BUY";
                     //let buy = trade::swap(buy_response, &jupiter_swap_api_client, &rpc_client).await;
                     //if buy {
-                        usdc = usdc - 200.0;
+                        usdc = usdc - 100.0;
                         sol = sol + buy_price;
                         thread::sleep(Duration::from_secs(10));
                     //}
@@ -159,9 +160,11 @@ async fn macd(keypair: Keypair) {
                 }
 
 
-                let total: f64 = usdc + (sol * sell_price);
+                let total: f64 = usdc + (sol * 2.0 * sell_price);
 
-                println!("{buy_price:.9}, {current_buy_rsi:.9}, {usdc:.6}, {sell_price:.6}, {current_sell_rsi:.9}, {sol:.9}, {buy_sell_flag}, {total}");
+                let timestamp = chrono::offset::Local::now();
+
+                println!("{timestamp:?}, {buy_price:.9}, {current_buy_rsi:.9}, {usdc:.6}, {sell_price:.6}, {current_sell_rsi:.9}, {sol:.9}, {buy_sell_flag}, {total}");
 
                 sol_last = sell_hist;
                 usdc_last = buy_hist;

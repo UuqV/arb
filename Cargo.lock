@@ -146,6 +146,7 @@ name = "arbot"
 version = "0.1.0"
 dependencies = [
  "bincode",
+ "chrono",
  "jupiter-swap-api-client",
  "solana-client",
  "solana-program",
