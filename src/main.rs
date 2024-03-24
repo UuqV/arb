@@ -112,7 +112,7 @@ async fn macd(keypair: Keypair) {
         match try_join!(jupiter_swap_api_client.quote(&sell_request), jupiter_swap_api_client.quote(&buy_request)) {
             Ok((sell_response, buy_response)) => {
 
-                let mut buy_sell_flag: &str = "FALSE";
+                let mut buy_sell_flag: &str = "";
 
                 let sell_amount: u64 = sell_response.out_amount;
                 let sell_price = sell_amount as f64 * USDC_DECIMALS * 0.995;
@@ -156,7 +156,7 @@ async fn macd(keypair: Keypair) {
                 let act_sol: f64 = get_sol_balance(&rpc_client).await;
                 let total: f64 = act_usdc + (act_sol * sell_price);
 
-                println!("{buy_price:.9}, {buy_hist:.9}, {buy_roc:.9}, {usdc:.6}, {act_usdc:.6}, {sell_price:.6}, {sell_hist:.9}, {sell_roc:.9}, {sol:.9}, {act_sol:.9}, {buy_sell_flag}, {total}");
+                println!("{buy_price:.9}, {buy_hist:.9}, {buy_roc:.9}, {usdc:.6}, {act_usdc:.6}, {sell_price:.6}, {sell_hist:.9}, {sell_roc:.9}, {sol:.9}, {act_sol:.9}, {buy_sell_flag}, {total:.2}");
 
                 sol_last = sell_hist;
                 usdc_last = buy_hist;
