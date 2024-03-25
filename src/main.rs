@@ -76,12 +76,12 @@ async fn macd(keypair: Keypair) {
     let mut sell_macd = Macd::new(12, 26, 9).unwrap();
     let mut sol_last: f64 = 0.0;
     let mut sell_last_roc: f64 = 0.0;
-    let mut sell_rsi = Rsi::new(14).unwrap();
+    let mut sell_rsi = Rsi::new(14 * 3).unwrap();
 
     let mut buy_macd = Macd::new(12, 26, 9).unwrap();
     let mut usdc_last: f64 = 0.0;
     let mut buy_last_roc: f64 = 0.0;
-    let mut buy_rsi = Rsi::new(14).unwrap();
+    let mut buy_rsi = Rsi::new(14 * 3).unwrap();
 
     let rpc_client = RpcClient::new("https://api.mainnet-beta.solana.com".into());
         
@@ -109,7 +109,7 @@ async fn macd(keypair: Keypair) {
     println!("Sell amount: {SELL_AMOUNT_SOL:#?}");
     println!("Hist threshold: {HIST_THRESHOLD:#?}");
     println!("Algorithm: RSI");
-    println!("Timestamp, Buy Price, Buy RSI, USDC, Sell Price, Sell RSI, SOL, Buy/Sell, Total");
+    println!("Timestamp----------------------,  USDC, Buy RSI, Price, SOL, Sell RSI, Price, Buy/Sell, Total");
 
     // GET /quote
     loop {
@@ -160,18 +160,24 @@ async fn macd(keypair: Keypair) {
                 }
 
 
-                let total: f64 = usdc + (sol * 2.0 * sell_price);
+                //let total: f64 = usdc + (sol * 2.0 * sell_price);
+
+
+
+                let act_usdc: f64 = get_token_account_balance(&rpc_client, USDC_MINT).await;
+                let act_sol: f64 = get_sol_balance(&rpc_client).await;
+                let total: f64 = act_usdc + (act_sol * sell_price);
 
                 let timestamp = chrono::offset::Local::now();
 
-                println!("{timestamp:?}, {buy_price:.3}, {current_buy_rsi:.2}, {usdc:.2}, {sell_price:.2}, {current_sell_rsi:.2}, {sol:.3}, {buy_sell_flag}, {total:.2}");
+                println!("{timestamp:?}, {act_usdc:.2}, {buy_price:.3}, {current_buy_rsi:.2}, {act_sol:.3}, {sell_price:.2}, {current_sell_rsi:.2}, {buy_sell_flag}, {total:.2}");
 
                 sol_last = sell_hist;
                 usdc_last = buy_hist;
                 sell_last_roc = sell_roc;
                 buy_last_roc = buy_roc;
 
-                thread::sleep(Duration::from_secs(60));
+                thread::sleep(Duration::from_secs(20));
             },
             Err(_e) => {
                 thread::sleep(Duration::from_secs(10));
