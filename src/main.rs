@@ -105,11 +105,7 @@ async fn macd(keypair: Keypair) {
     let initial_funding: f64 = get_token_account_balance(&rpc_client, USDC_MINT).await;
     let mut sol : f64 = get_sol_balance(&rpc_client).await;
     let mut usdc : f64 = initial_funding;
-    println!("Initial funding: {initial_funding:#?}");
-    println!("Sell amount: {SELL_AMOUNT_SOL:#?}");
-    println!("Hist threshold: {HIST_THRESHOLD:#?}");
-    println!("Algorithm: Solid Buy");
-    println!("Timestamp, Buy Price, Buy Histogram, Buy RSI, USDC, Sell Price, Sell Histogram, Sell RSI, SOL, Buy/Sell, Total");
+    println!("Timestamp----------------------,  USDC, Buy RSI, Price, SOL, Sell RSI, Price, Buy/Sell, Total");
 
     // GET /quote
     loop {
