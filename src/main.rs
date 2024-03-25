@@ -158,9 +158,13 @@ async fn macd(keypair: Keypair) {
 
                 let total: f64 = usdc + (sol * 2.0 * sell_price);
 
+                //let act_usdc: f64 = get_token_account_balance(&rpc_client, USDC_MINT).await;
+                //let act_sol: f64 = get_sol_balance(&rpc_client).await;
+                //let total: f64 = act_usdc + (act_sol * sell_price);
+
                 let timestamp = chrono::offset::Local::now();
 
-                println!("{timestamp:.2}, {buy_price:.3}, {buy_hist:.4}, {current_buy_rsi:.2}, {usdc:.2}, {sell_price:.3}, {sell_hist:.4}, {current_sell_rsi:.2}, {sol:.4}, {buy_sell_flag}, {total:.2}");
+                println!("{timestamp:?}, {usdc:.2}, {buy_price:.3}, {current_buy_rsi:.2}, {sol:.3}, {sell_price:.2}, {current_sell_rsi:.2}, {buy_sell_flag}, {total:.2}");
 
                 thread::sleep(Duration::from_secs(60));
             },
