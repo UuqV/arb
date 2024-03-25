@@ -164,7 +164,7 @@ async fn macd(keypair: Keypair) {
 
                 let timestamp = chrono::offset::Local::now();
 
-                println!("{timestamp:?}, {buy_price:.9}, {current_buy_rsi:.9}, {usdc:.6}, {sell_price:.6}, {current_sell_rsi:.9}, {sol:.9}, {buy_sell_flag}, {total}");
+                println!("{timestamp:?}, {buy_price:.3}, {current_buy_rsi:.2}, {usdc:.2}, {sell_price:.2}, {current_sell_rsi:.2}, {sol:.3}, {buy_sell_flag}, {total}");
 
                 sol_last = sell_hist;
                 usdc_last = buy_hist;
