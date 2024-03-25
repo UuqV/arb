@@ -105,7 +105,7 @@ async fn macd(keypair: Keypair) {
     let initial_funding: f64 = get_token_account_balance(&rpc_client, USDC_MINT).await;
     let mut sol : f64 = get_sol_balance(&rpc_client).await;
     let mut usdc : f64 = initial_funding;
-    println!("Timestamp----------------------,  USDC, Buy RSI, Price, SOL, Sell RSI, Price, Buy/Sell, Total");
+    println!("Timestamp----------------------,  USDC, HIST, Price, SOL, HIST, Price, Buy/Sell, Total");
 
     // GET /quote
     loop {
@@ -160,7 +160,7 @@ async fn macd(keypair: Keypair) {
 
                 let timestamp = chrono::offset::Local::now();
 
-                println!("{timestamp:?}, {usdc:.2}, {buy_price:.3}, {current_buy_rsi:.2}, {sol:.3}, {sell_price:.2}, {current_sell_rsi:.2}, {buy_sell_flag}, {total:.2}");
+                println!("{timestamp:?}, {usdc:.2}, {buy_hist:.4}, {current_buy_rsi:.2}, {sol:.3}, {sell_hist:.4}, {current_sell_rsi:.2}, {buy_sell_flag}, {total:.2}");
 
                 thread::sleep(Duration::from_secs(60));
             },
