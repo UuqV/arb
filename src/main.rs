@@ -109,7 +109,7 @@ async fn macd(keypair: Keypair) {
     println!("Sell amount: {SELL_AMOUNT_SOL:#?}");
     println!("Hist threshold: {HIST_THRESHOLD:#?}");
     println!("Algorithm: RSI");
-    println!("Buy Price, Buy RSI, USDC, Sell Price, Sell RSI, SOL, Buy/Sell, Total");
+    println!("Timestamp, Buy Price, Buy RSI, USDC, Sell Price, Sell RSI, SOL, Buy/Sell, Total");
 
     // GET /quote
     loop {
@@ -128,15 +128,15 @@ async fn macd(keypair: Keypair) {
 
                 if sell_logic::should_sell(current_sell_rsi, sol) {
                     buy_sell_flag = "SELL";
-                    //let sell = trade::swap(sell_response, &jupiter_swap_api_client, &rpc_client).await;
-                    //if sell {
+                    let sell = trade::swap(sell_response, &jupiter_swap_api_client, &rpc_client).await;
+                    if sell {
                         usdc = usdc + sell_price;
                         sol = sol - SELL_AMOUNT_SOL;
                         thread::sleep(Duration::from_secs(10));
-                    //}
-                    //else {
-                    //    buy_sell_flag = "ERROR";
-                    //}
+                    }
+                    else {
+                        buy_sell_flag = "ERROR";
+                    }
                 }
 
                 let buy_amount: u64 = buy_response.out_amount;
@@ -148,15 +148,15 @@ async fn macd(keypair: Keypair) {
 
                 if buy_logic::should_buy(current_buy_rsi, usdc) {
                     buy_sell_flag = "BUY";
-                    //let buy = trade::swap(buy_response, &jupiter_swap_api_client, &rpc_client).await;
-                    //if buy {
+                    let buy = trade::swap(buy_response, &jupiter_swap_api_client, &rpc_client).await;
+                    if buy {
                         usdc = usdc - 100.0;
                         sol = sol + buy_price;
                         thread::sleep(Duration::from_secs(10));
-                    //}
-                    //else {
-                       // buy_sell_flag = "ERROR";
-                    //}
+                    }
+                    else {
+                        buy_sell_flag = "ERROR";
+                    }
                 }
 
 
@@ -164,7 +164,7 @@ async fn macd(keypair: Keypair) {
 
                 let timestamp = chrono::offset::Local::now();
 
-                println!("{timestamp:?}, {buy_price:.3}, {current_buy_rsi:.2}, {usdc:.2}, {sell_price:.2}, {current_sell_rsi:.2}, {sol:.3}, {buy_sell_flag}, {total}");
+                println!("{timestamp:?}, {buy_price:.3}, {current_buy_rsi:.2}, {usdc:.2}, {sell_price:.2}, {current_sell_rsi:.2}, {sol:.3}, {buy_sell_flag}, {total:.2}");
 
                 sol_last = sell_hist;
                 usdc_last = buy_hist;
