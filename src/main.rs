@@ -76,12 +76,12 @@ async fn macd(keypair: Keypair) {
     let mut sell_macd = Macd::new(12, 26, 9).unwrap();
     let mut sol_last: f64 = 0.0;
     let mut sell_last_roc: f64 = 0.0;
-    let mut sell_rsi = Rsi::new(14 * 3).unwrap();
+    let mut sell_rsi = Rsi::new(14).unwrap();
 
     let mut buy_macd = Macd::new(12, 26, 9).unwrap();
     let mut usdc_last: f64 = 0.0;
     let mut buy_last_roc: f64 = 0.0;
-    let mut buy_rsi = Rsi::new(14 * 3).unwrap();
+    let mut buy_rsi = Rsi::new(14).unwrap();
 
     let rpc_client = RpcClient::new("https://api.mainnet-beta.solana.com".into());
         
@@ -132,7 +132,6 @@ async fn macd(keypair: Keypair) {
                     if sell {
                         usdc = usdc + sell_price;
                         sol = sol - SELL_AMOUNT_SOL;
-                        thread::sleep(Duration::from_secs(10));
                     }
                     else {
                         buy_sell_flag = "ERROR";
@@ -152,7 +151,6 @@ async fn macd(keypair: Keypair) {
                     if buy {
                         usdc = usdc - 100.0;
                         sol = sol + buy_price;
-                        thread::sleep(Duration::from_secs(10));
                     }
                     else {
                         buy_sell_flag = "ERROR";
@@ -166,7 +164,7 @@ async fn macd(keypair: Keypair) {
 
                 let act_usdc: f64 = get_token_account_balance(&rpc_client, USDC_MINT).await;
                 let act_sol: f64 = get_sol_balance(&rpc_client).await;
-                let total: f64 = act_usdc + (act_sol * sell_price);
+                let total: f64 = act_usdc + (act_sol * sell_price * 2.0);
 
                 let timestamp = chrono::offset::Local::now();
 

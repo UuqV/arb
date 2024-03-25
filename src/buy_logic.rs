@@ -3,7 +3,7 @@ pub fn should_buy(rsi: f64, usdc: f64) -> bool {
 }
 
 pub fn check_rsi(rsi: f64) -> bool {
-    return rsi >= 69.0;
+    return rsi >= 80.0;
 }
 
 pub fn check_hist_threshold(hist_threshold: f64, hist: f64 ) -> bool {
