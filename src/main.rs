@@ -160,7 +160,7 @@ async fn macd(keypair: Keypair) {
 
                 let timestamp = chrono::offset::Local::now();
 
-                println!("{timestamp:?}, {buy_price:.9}, {buy_hist:.6}, {current_buy_rsi:.9}, {usdc:.6}, {sell_price:.6}, {sell_hist:.6}, {current_sell_rsi:.9}, {sol:.9}, {buy_sell_flag}, {total:.2}");
+                println!("{timestamp:.2}, {buy_price:.3}, {buy_hist:.4}, {current_buy_rsi:.2}, {usdc:.2}, {sell_price:.3}, {sell_hist:.4}, {current_sell_rsi:.2}, {sol:.4}, {buy_sell_flag}, {total:.2}");
 
                 thread::sleep(Duration::from_secs(60));
             },
