@@ -7,8 +7,8 @@ use jupiter_swap_api_client::{
 use solana_sdk::pubkey;
 use solana_sdk::pubkey::Pubkey;
 use ta::indicators::MovingAverageConvergenceDivergence as Macd;
-use ta::Next;
 use ta::indicators::RelativeStrengthIndex as Rsi;
+use ta::Next;
 use std::thread;
 use std::time::Duration;
 use solana_sdk::{signature::read_keypair_file, signature::Keypair};
@@ -74,13 +74,13 @@ async fn macd(keypair: Keypair) {
     let jupiter_swap_api_client = JupiterSwapApiClient::new(api_base_url);
 
     let mut sell_macd = Macd::new(12, 26, 9).unwrap();
-    let mut sol_last: f64 = 0.0;
     let mut sell_last_roc: f64 = 0.0;
+    let mut sell_rsi = Rsi::new(14).unwrap();
     let mut sell_rsi = Rsi::new(14).unwrap();
 
     let mut buy_macd = Macd::new(12, 26, 9).unwrap();
-    let mut usdc_last: f64 = 0.0;
     let mut buy_last_roc: f64 = 0.0;
+    let mut buy_rsi = Rsi::new(14).unwrap();
     let mut buy_rsi = Rsi::new(14).unwrap();
 
     let rpc_client = RpcClient::new("https://api.mainnet-beta.solana.com".into());
@@ -108,25 +108,23 @@ async fn macd(keypair: Keypair) {
     println!("Initial funding: {initial_funding:#?}");
     println!("Sell amount: {SELL_AMOUNT_SOL:#?}");
     println!("Hist threshold: {HIST_THRESHOLD:#?}");
-    println!("Algorithm: RSI");
-    println!("Buy Price, Buy RSI, USDC, Sell Price, Sell RSI, SOL, Buy/Sell, Total");
+    println!("Algorithm: Solid Buy");
+    println!("Timestamp, Buy Price, Buy Histogram, Buy RSI, USDC, Sell Price, Sell Histogram, Sell RSI, SOL, Buy/Sell, Total");
 
     // GET /quote
     loop {
         match try_join!(jupiter_swap_api_client.quote(&sell_request), jupiter_swap_api_client.quote(&buy_request)) {
             Ok((sell_response, buy_response)) => {
 
-                let mut buy_sell_flag: &str = "NONE";
+                let mut buy_sell_flag: &str = "";
 
                 let sell_amount: u64 = sell_response.out_amount;
                 let sell_price: f64 = sell_amount as f64 * USDC_DECIMALS * 0.995;
                 let sell_hist = sell_macd.next(sell_price).histogram;
-                let sell_roc = sell_hist - sol_last;
-                let sell_2deriv = sell_last_roc;
                 let current_sell_rsi = sell_rsi.next(sell_price);
 
 
-                if sell_logic::should_sell(current_sell_rsi, sol) {
+                if sell_logic::should_sell(HIST_THRESHOLD, sell_hist, current_sell_rsi, sol) {
                     buy_sell_flag = "SELL";
                     //let sell = trade::swap(sell_response, &jupiter_swap_api_client, &rpc_client).await;
                     //if sell {
@@ -142,11 +140,9 @@ async fn macd(keypair: Keypair) {
                 let buy_amount: u64 = buy_response.out_amount;
                 let buy_price = buy_amount as f64 * NATIVE_DECIMALS * 0.995;
                 let buy_hist = buy_macd.next(buy_price).histogram;
-                let buy_roc = buy_hist - usdc_last;
-                let buy_2deriv = buy_roc - buy_last_roc;
                 let current_buy_rsi = buy_rsi.next(buy_price);
 
-                if buy_logic::should_buy(current_buy_rsi, usdc) {
+                if buy_logic::should_buy(HIST_THRESHOLD * 0.0025, buy_hist, current_buy_rsi, usdc, sell_price) {
                     buy_sell_flag = "BUY";
                     //let buy = trade::swap(buy_response, &jupiter_swap_api_client, &rpc_client).await;
                     //if buy {
@@ -164,12 +160,7 @@ async fn macd(keypair: Keypair) {
 
                 let timestamp = chrono::offset::Local::now();
 
-                println!("{timestamp:?}, {buy_price:.9}, {current_buy_rsi:.9}, {usdc:.6}, {sell_price:.6}, {current_sell_rsi:.9}, {sol:.9}, {buy_sell_flag}, {total}");
-
-                sol_last = sell_hist;
-                usdc_last = buy_hist;
-                sell_last_roc = sell_roc;
-                buy_last_roc = buy_roc;
+                println!("{timestamp:?}, {buy_price:.9}, {buy_hist:.6}, {current_buy_rsi:.9}, {usdc:.6}, {sell_price:.6}, {sell_hist:.6}, {current_sell_rsi:.9}, {sol:.9}, {buy_sell_flag}, {total:.2}");
 
                 thread::sleep(Duration::from_secs(60));
             },

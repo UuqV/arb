@@ -1,9 +1,9 @@
-pub fn should_sell(rsi: f64, sol: f64) -> bool {
-    return check_rsi(rsi) && check_sell_funding(sol);
+pub fn should_sell(hist_threshold: f64, hist: f64, rsi: f64, sol: f64) -> bool {
+    return (check_hist_threshold(hist_threshold, hist) || check_rsi(rsi)) && check_sell_funding(sol);
 }
 
 pub fn check_rsi(rsi: f64) -> bool {
-    return rsi >= 69.0;
+    return rsi >= 70.0;
 }
 
 pub fn check_hist_threshold(hist_threshold: f64, hist: f64) -> bool {
@@ -14,8 +14,8 @@ pub fn check_sell_funding(sol: f64) -> bool {
     return sol > 0.51;
 }
 
-pub fn check_sell_roc(roc: f64, last_roc: f64) -> bool {
-    return roc <= 0.0 && last_roc >= 0.0;
+pub fn check_sell_roc(roc: f64) -> bool {
+    return roc.abs() < 0.01;
 }
 
 #[cfg(test)]
@@ -30,11 +30,12 @@ mod sell_tests {
     }
 
     #[test]
-    fn negative_sell_roc() { // Sells should happen when the ROC switches negative
-        assert_eq!(check_sell_roc(0.01, 0.1), false);
-        assert_eq!(check_sell_roc(-0.01, 0.1), true);
-        assert_eq!(check_sell_roc(-0.01, -0.1), false);
-        assert_eq!(check_sell_roc(0.01, -0.1), false);
+    fn negative_sell_roc() { // Sells should happen when the ROC is sufficiently low
+        assert_eq!(check_sell_roc(0.01), false);
+        assert_eq!(check_sell_roc(-0.002), true);
+        assert_eq!(check_sell_roc(0.002), true);
+        assert_eq!(check_sell_roc(-0.01), false);
+        assert_eq!(check_sell_roc(0.01), false);
     }
 
     #[test]
